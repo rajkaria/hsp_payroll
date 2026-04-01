@@ -6,6 +6,8 @@ import { useApproveToken, useFundPayroll } from "@/hooks/useFundPayroll";
 import { CONTRACTS } from "@/config/contracts";
 import { parseUnits } from "viem";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2, Wallet, Lock, BarChart3 } from "lucide-react";
 
 const FREQUENCIES = [
   { label: "Weekly", value: 604800 },
@@ -18,6 +20,12 @@ interface Recipient {
   address: string;
   amount: string;
 }
+
+const stepVariants = {
+  enter: { opacity: 0, x: 30 },
+  center: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -30 },
+};
 
 export function CreatePayrollForm() {
   const router = useRouter();
@@ -58,186 +66,276 @@ export function CreatePayrollForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto relative">
       {/* Progress bar */}
-      <div className="flex gap-2 mb-8">
+      <div className="flex gap-2 mb-10">
         {[1, 2, 3].map((s) => (
-          <div
-            key={s}
-            className={`flex-1 h-1 rounded ${s <= step ? "bg-[#1E5EFF]" : "bg-[#1F2937]"}`}
-          />
+          <div key={s} className="flex-1 h-1.5 rounded-full overflow-hidden bg-[#1A2340]">
+            <motion.div
+              className="h-full bg-gradient-to-r from-[#1E5EFF] to-[#8B5CF6]"
+              initial={{ width: "0%" }}
+              animate={{ width: s <= step ? "100%" : "0%" }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
+          </div>
         ))}
       </div>
 
-      {step === 1 && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
-            Payroll Details
-          </h2>
+      {/* Step labels */}
+      <div className="flex justify-between mb-8 text-xs text-[#525E75]">
+        <span className={step >= 1 ? "text-[#8B95A9]" : ""}>Details</span>
+        <span className={step >= 2 ? "text-[#8B95A9]" : ""}>Recipients</span>
+        <span className={step >= 3 ? "text-[#8B95A9]" : ""}>Fund</span>
+      </div>
 
-          <div>
-            <label className="block text-sm text-[#9CA3AF] mb-2">Payroll Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Team Alpha Monthly"
-              className="w-full px-4 py-3 bg-[#111827] border border-[#1F2937] rounded-lg text-white focus:border-[#1E5EFF] focus:outline-none"
-            />
-          </div>
+      <AnimatePresence mode="wait">
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <h2 className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
+              Payroll <span className="gradient-text">Details</span>
+            </h2>
 
-          <div>
-            <label className="block text-sm text-[#9CA3AF] mb-2">Token</label>
-            <div className="px-4 py-3 bg-[#111827] border border-[#1F2937] rounded-lg text-white">
-              Mock USDT (Testnet)
+            <div>
+              <label className="block text-sm text-[#8B95A9] mb-2">Payroll Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Team Alpha Monthly"
+                className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors"
+              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm text-[#9CA3AF] mb-2">Frequency</label>
-            <div className="grid grid-cols-4 gap-2">
-              {FREQUENCIES.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => setFrequency(f.value)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    frequency === f.value
-                      ? "bg-[#1E5EFF] text-white"
-                      : "bg-[#111827] border border-[#1F2937] text-[#9CA3AF] hover:border-[#1E5EFF]"
-                  }`}
+            <div>
+              <label className="block text-sm text-[#8B95A9] mb-2">Token</label>
+              <div className="px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-[#8B95A9] flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-[#10B981]/20 flex items-center justify-center">
+                  <span className="text-[10px] text-[#10B981] font-bold">$</span>
+                </div>
+                Mock USDT (Testnet)
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-[#8B95A9] mb-2">Frequency</label>
+              <div className="grid grid-cols-4 gap-2">
+                {FREQUENCIES.map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setFrequency(f.value)}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                      frequency === f.value
+                        ? "bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white shadow-[0_0_15px_rgba(30,94,255,0.2)]"
+                        : "bg-[#0F1629] border border-[#1A2340] text-[#8B95A9] hover:border-[#1E5EFF]/40 hover:text-white"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setStep(2)}
+              disabled={!name}
+              className="w-full px-4 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              Next: Add Recipients
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div
+            key="step2"
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <h2 className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
+              Add <span className="gradient-text">Recipients</span>
+            </h2>
+
+            <div className="space-y-3">
+              {recipients.map((r, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex gap-3 items-center"
                 >
-                  {f.label}
-                </button>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={r.address}
+                      onChange={(e) => updateRecipient(i, "address", e.target.value)}
+                      placeholder="0x... wallet address"
+                      className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors font-mono"
+                    />
+                  </div>
+                  <div className="w-32">
+                    <input
+                      type="number"
+                      value={r.amount}
+                      onChange={(e) => updateRecipient(i, "amount", e.target.value)}
+                      placeholder="Amount"
+                      className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors"
+                    />
+                  </div>
+                  {recipients.length > 1 && (
+                    <button
+                      onClick={() => removeRecipient(i)}
+                      className="p-2.5 text-[#EF4444] hover:bg-[#EF4444]/10 rounded-xl transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </motion.div>
               ))}
             </div>
-          </div>
 
-          <button
-            onClick={() => setStep(2)}
-            disabled={!name}
-            className="w-full px-4 py-3 bg-[#1E5EFF] text-white rounded-lg font-medium hover:bg-[#1E5EFF]/90 transition disabled:opacity-50"
+            <button
+              onClick={addRecipient}
+              className="flex items-center gap-2 text-[#1E5EFF] text-sm font-medium hover:text-[#4B7FFF] transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add another recipient
+            </button>
+
+            <div className="glass rounded-xl p-4">
+              <div className="text-sm text-[#8B95A9] mb-1">Total per cycle</div>
+              <div className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
+                <span className="gradient-text">{totalPerCycle.toLocaleString()}</span>
+                <span className="text-sm text-[#8B95A9] ml-2 font-normal">USDT</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 px-4 py-3 glass rounded-xl font-medium hover:border-[#1E5EFF]/30 transition-all flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+              <button
+                onClick={() => { handleCreate(); setStep(3); }}
+                disabled={recipients.some((r) => !r.address || !r.amount)}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Confirm in wallet...
+                  </>
+                ) : (
+                  <>
+                    Create Payroll
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
           >
-            Next: Add Recipients
-          </button>
-        </div>
-      )}
+            <h2 className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
+              Fund <span className="gradient-text">Escrow</span>
+            </h2>
 
-      {step === 2 && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
-            Add Recipients
-          </h2>
-
-          {recipients.map((r, i) => (
-            <div key={i} className="flex gap-3 items-start">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={r.address}
-                  onChange={(e) => updateRecipient(i, "address", e.target.value)}
-                  placeholder="0x... wallet address"
-                  className="w-full px-4 py-3 bg-[#111827] border border-[#1F2937] rounded-lg text-white text-sm focus:border-[#1E5EFF] focus:outline-none"
-                />
-              </div>
-              <div className="w-32">
-                <input
-                  type="number"
-                  value={r.amount}
-                  onChange={(e) => updateRecipient(i, "amount", e.target.value)}
-                  placeholder="Amount"
-                  className="w-full px-4 py-3 bg-[#111827] border border-[#1F2937] rounded-lg text-white text-sm focus:border-[#1E5EFF] focus:outline-none"
-                />
-              </div>
-              {recipients.length > 1 && (
-                <button
-                  onClick={() => removeRecipient(i)}
-                  className="px-3 py-3 text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg"
-                >
-                  X
-                </button>
+            <div>
+              <label className="block text-sm text-[#8B95A9] mb-2">Deposit Amount (USDT)</label>
+              <input
+                type="number"
+                value={fundAmount}
+                onChange={(e) => setFundAmount(e.target.value)}
+                placeholder="e.g., 10000"
+                className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors"
+              />
+              {totalPerCycle > 0 && fundAmount && (
+                <div className="mt-2 text-sm text-[#8B95A9] flex items-center gap-1.5">
+                  <BarChart3 className="w-3.5 h-3.5 text-[#06B6D4]" />
+                  Runway: ~{Math.floor(parseFloat(fundAmount) / totalPerCycle)} cycles
+                </div>
               )}
             </div>
-          ))}
 
-          <button
-            onClick={addRecipient}
-            className="text-[#1E5EFF] text-sm font-medium hover:underline"
-          >
-            + Add another recipient
-          </button>
+            <div className="space-y-3">
+              <button
+                onClick={handleApprove}
+                disabled={!fundAmount || isApproving || isApprovingConfirm}
+                className={`w-full px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                  approveSuccess
+                    ? "bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/20"
+                    : "glass hover:border-[#1E5EFF]/40 text-[#1E5EFF] disabled:opacity-40"
+                }`}
+              >
+                {isApproving ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Confirm in wallet...</>
+                ) : isApprovingConfirm ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Approving...</>
+                ) : approveSuccess ? (
+                  <><Check className="w-4 h-4" /> Approved</>
+                ) : (
+                  <><Wallet className="w-4 h-4" /> Step 1: Approve USDT</>
+                )}
+              </button>
+              <button
+                onClick={handleFund}
+                disabled={!approveSuccess || isFunding || isFundingConfirm}
+                className="w-full px-4 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {isFunding ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Confirm in wallet...</>
+                ) : isFundingConfirm ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Depositing...</>
+                ) : fundSuccess ? (
+                  <><Check className="w-4 h-4" /> Funded!</>
+                ) : (
+                  <><Lock className="w-4 h-4" /> Step 2: Fund Payroll</>
+                )}
+              </button>
+            </div>
 
-          <div className="p-4 bg-[#111827] border border-[#1F2937] rounded-lg">
-            <div className="text-sm text-[#9CA3AF]">Total per cycle</div>
-            <div className="text-xl font-bold">{totalPerCycle.toLocaleString()} USDT</div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setStep(1)}
-              className="flex-1 px-4 py-3 bg-[#111827] border border-[#1F2937] text-white rounded-lg font-medium hover:bg-[#1F2937] transition"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => { handleCreate(); setStep(3); }}
-              disabled={recipients.some((r) => !r.address || !r.amount)}
-              className="flex-1 px-4 py-3 bg-[#1E5EFF] text-white rounded-lg font-medium hover:bg-[#1E5EFF]/90 transition disabled:opacity-50"
-            >
-              {isCreating ? "Confirm in wallet..." : "Create Payroll"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
-            Fund Escrow
-          </h2>
-
-          <div>
-            <label className="block text-sm text-[#9CA3AF] mb-2">Deposit Amount (USDT)</label>
-            <input
-              type="number"
-              value={fundAmount}
-              onChange={(e) => setFundAmount(e.target.value)}
-              placeholder="e.g., 10000"
-              className="w-full px-4 py-3 bg-[#111827] border border-[#1F2937] rounded-lg text-white focus:border-[#1E5EFF] focus:outline-none"
-            />
-            {totalPerCycle > 0 && fundAmount && (
-              <div className="mt-2 text-sm text-[#9CA3AF]">
-                Runway: ~{Math.floor(parseFloat(fundAmount) / totalPerCycle)} cycles
-              </div>
+            {fundSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <button
+                  onClick={() => router.push("/employer")}
+                  className="w-full px-4 py-3 bg-[#10B981] text-white rounded-xl font-medium hover:bg-[#10B981]/90 transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Go to Dashboard
+                </button>
+              </motion.div>
             )}
-          </div>
-
-          <div className="space-y-3">
-            <button
-              onClick={handleApprove}
-              disabled={!fundAmount || isApproving || isApprovingConfirm}
-              className="w-full px-4 py-3 bg-[#111827] border border-[#1E5EFF] text-[#1E5EFF] rounded-lg font-medium hover:bg-[#1E5EFF]/10 transition disabled:opacity-50"
-            >
-              {isApproving ? "Confirm in wallet..." : isApprovingConfirm ? "Approving..." : approveSuccess ? "Approved!" : "Step 1: Approve USDT"}
-            </button>
-            <button
-              onClick={handleFund}
-              disabled={!approveSuccess || isFunding || isFundingConfirm}
-              className="w-full px-4 py-3 bg-[#1E5EFF] text-white rounded-lg font-medium hover:bg-[#1E5EFF]/90 transition disabled:opacity-50"
-            >
-              {isFunding ? "Confirm in wallet..." : isFundingConfirm ? "Depositing..." : fundSuccess ? "Funded!" : "Step 2: Fund Payroll"}
-            </button>
-          </div>
-
-          {fundSuccess && (
-            <button
-              onClick={() => router.push("/employer")}
-              className="w-full px-4 py-3 bg-[#10B981] text-white rounded-lg font-medium hover:bg-[#10B981]/90 transition"
-            >
-              Go to Dashboard
-            </button>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
