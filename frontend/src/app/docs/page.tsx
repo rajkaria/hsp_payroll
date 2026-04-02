@@ -150,15 +150,15 @@ export default function DocsPage() {
 
           <Section id="overview" title="Overview" icon={BookOpen}>
             <p>
-              HashPay is an on-chain recurring payment system built on HashKey Chain (OP Stack L2).
+              HashPay is an on-chain recurring payroll platform built on HashKey Chain (OP Stack L2).
               It enables DAOs, crypto-native teams, and freelancers to set up automated payroll with
               cryptographic settlement receipts via the HashKey Settlement Protocol (HSP).
             </p>
             <div className="grid sm:grid-cols-3 gap-3 my-6">
               {[
-                { label: "Chain", value: "HashKey Chain (ID: 133)", icon: GitBranch },
+                { label: "Chain", value: "Testnet (133) + Mainnet (177)", icon: GitBranch },
                 { label: "Contracts", value: "Solidity 0.8.24", icon: Code2 },
-                { label: "Frontend", value: "Next.js + wagmi v2", icon: Box },
+                { label: "Frontend", value: "Next.js 16 + wagmi v2", icon: Box },
               ].map((item) => (
                 <div key={item.label} className="glass-card rounded-xl p-4">
                   <item.icon className="w-4 h-4 text-[#8B5CF6] mb-2" />
@@ -166,6 +166,34 @@ export default function DocsPage() {
                   <div className="text-sm font-medium text-white">{item.value}</div>
                 </div>
               ))}
+            </div>
+            <h3 className="text-white font-semibold mt-6 mb-3">Pages</h3>
+            <div className="glass rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#1C1E3A]">
+                    <th className="text-left py-2.5 px-4 text-[#5A6178] text-xs uppercase tracking-wider">Route</th>
+                    <th className="text-left py-2.5 px-4 text-[#5A6178] text-xs uppercase tracking-wider">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs">
+                  {[
+                    ["/", "Landing page with animated mesh, features, interactive stepper"],
+                    ["/employer", "Employer dashboard — manage payrolls, execute cycles"],
+                    ["/employer/create", "Multi-step payroll wizard with templates"],
+                    ["/employer/analytics", "Payment volume, burn rate, cost charts"],
+                    ["/employer/profile", "Business profile for compliance reports"],
+                    ["/employee", "Employee dashboard — payment history, streaming balance"],
+                    ["/faucet", "Token faucet — mint testnet USDT"],
+                    ["/docs", "Full documentation"],
+                  ].map(([route, desc]) => (
+                    <tr key={route} className="border-b border-[#1C1E3A]/50">
+                      <td className="py-2.5 px-4 font-mono text-[#8B5CF6]">{route}</td>
+                      <td className="py-2.5 px-4 text-[#9BA3B7]">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </Section>
 
@@ -339,10 +367,14 @@ createBatchRequests(payer, recipients[], token, amounts[]) → requestId[]
                 { icon: Lock, title: "Escrow-Based Payroll", desc: "Funds held securely in smart contract escrow with transparent runway tracking." },
                 { icon: Shield, title: "HSP Settlement Receipts", desc: "Every payment generates an immutable on-chain receipt via HashKey Settlement Protocol." },
                 { icon: Users, title: "Multi-Recipient Payrolls", desc: "Pay unlimited team members in a single cycle execution." },
-                { icon: Wallet, title: "Multi-Token Support", desc: "USDT, USDC, HSK, WETH, and custom ERC-20 tokens." },
+                { icon: Wallet, title: "Multi-Token Support", desc: "USDT, USDC, HSK, WETH, and custom ERC-20 tokens on HashKey Chain." },
+                { icon: GitBranch, title: "Multi-Chain Support", desc: "Supports HashKey Chain testnet (133) and mainnet (177) with automatic network switching." },
+                { icon: FileText, title: "Payroll Templates", desc: "Pre-built templates (Engineering, Contractor, Design, Quick Test) to speed up payroll creation." },
+                { icon: BarChart3, title: "Analytics Dashboard", desc: "Payment volume, burn rate, and per-employee cost charts with summary stats." },
+                { icon: FileText, title: "Compliance Reports", desc: "Downloadable PDF reports with company header, payment tables, and HSP receipt IDs." },
+                { icon: ExternalLink, title: "Explorer Integration", desc: "Transaction hashes linked to HashKey Chain block explorer for on-chain verification." },
+                { icon: Wallet, title: "Token Faucet", desc: "One-click Mock USDT minting at /faucet for testnet demos." },
                 { icon: Zap, title: "Gasless Claims (Preview)", desc: "ERC-2771 meta-transaction support for gas-free employee claims." },
-                { icon: BarChart3, title: "Analytics Dashboard", desc: "Payment volume, burn rate, and per-employee cost visualizations." },
-                { icon: FileText, title: "Compliance Reports", desc: "PDF payroll reports with company headers, HSP receipt IDs, and payment tables." },
                 { icon: Code2, title: "Payment Streaming (Preview)", desc: "Per-second salary streaming with live-ticking balance counters." },
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-4 glass-card rounded-xl p-4">
@@ -415,41 +447,64 @@ useExecuteCycle()     → execute(payrollId)`} />
           </Section>
 
           <Section id="network" title="Network Information" icon={GitBranch}>
-            <div className="glass-card rounded-xl p-5 space-y-3">
-              <h3 className="text-white font-semibold">HashKey Chain Testnet</h3>
-              <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                {[
-                  ["Chain ID", "133"],
-                  ["Currency", "HSK (18 decimals)"],
-                  ["RPC URL", "https://testnet.hsk.xyz"],
-                  ["Block Explorer", "https://testnet-explorer.hsk.xyz"],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between items-center glass rounded-lg px-3 py-2">
-                    <span className="text-[#5A6178]">{label}</span>
-                    <span className="font-mono text-xs text-white">{value}</span>
-                  </div>
-                ))}
+            <div className="space-y-4">
+              <div className="glass-card rounded-xl p-5 space-y-3">
+                <h3 className="text-white font-semibold flex items-center gap-2">
+                  HashKey Chain Testnet
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#C084FC] border border-[#8B5CF6]/20 font-medium">Active</span>
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  {[
+                    ["Chain ID", "133"],
+                    ["Currency", "HSK (18 decimals)"],
+                    ["RPC URL", "https://testnet.hsk.xyz"],
+                    ["Block Explorer", "https://testnet-explorer.hsk.xyz"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex justify-between items-center glass rounded-lg px-3 py-2">
+                      <span className="text-[#5A6178]">{label}</span>
+                      <span className="font-mono text-xs text-white">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="glass-card rounded-xl p-5 space-y-3">
+                <h3 className="text-white font-semibold">HashKey Chain Mainnet</h3>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  {[
+                    ["Chain ID", "177"],
+                    ["Currency", "HSK (18 decimals)"],
+                    ["RPC URL", "https://mainnet.hsk.xyz"],
+                    ["Block Explorer", "https://explorer.hsk.xyz"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex justify-between items-center glass rounded-lg px-3 py-2">
+                      <span className="text-[#5A6178]">{label}</span>
+                      <span className="font-mono text-xs text-white">{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <a
-                href="https://testnet-explorer.hsk.xyz"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 glass-card rounded-xl px-4 py-3 text-sm hover:border-[#8B5CF6]/30 transition-all"
-              >
+            <div className="flex flex-wrap gap-3 mt-6">
+              <a href="https://testnet-explorer.hsk.xyz" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 glass-card rounded-xl px-4 py-3 text-sm hover:border-[#8B5CF6]/30 transition-all">
                 <ExternalLink className="w-4 h-4 text-[#8B5CF6]" />
-                Block Explorer
+                Testnet Explorer
               </a>
-              <a
-                href="https://www.hashkeychain.net/faucet"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 glass-card rounded-xl px-4 py-3 text-sm hover:border-[#8B5CF6]/30 transition-all"
-              >
+              <a href="https://explorer.hsk.xyz" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 glass-card rounded-xl px-4 py-3 text-sm hover:border-[#8B5CF6]/30 transition-all">
+                <ExternalLink className="w-4 h-4 text-[#8B5CF6]" />
+                Mainnet Explorer
+              </a>
+              <a href="https://www.hashkeychain.net/faucet" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 glass-card rounded-xl px-4 py-3 text-sm hover:border-[#8B5CF6]/30 transition-all">
                 <ExternalLink className="w-4 h-4 text-[#10B981]" />
-                Testnet Faucet
+                HSK Faucet
+              </a>
+              <a href="/faucet"
+                className="flex items-center gap-2 glass-card rounded-xl px-4 py-3 text-sm hover:border-[#8B5CF6]/30 transition-all">
+                <Wallet className="w-4 h-4 text-[#F59E0B]" />
+                USDT Faucet
               </a>
             </div>
           </Section>
