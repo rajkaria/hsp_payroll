@@ -4,6 +4,8 @@ import { usePayrollDetails, useEscrowBalance, useRunway } from "@/hooks/usePayro
 import { useExecuteCycle } from "@/hooks/useExecuteCycle";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
 import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap } from "lucide-react";
+import { FiatValueBadge } from "./fiat-value-badge";
+import { GenerateReportButton } from "./generate-report-button";
 
 interface PayrollCardProps {
   payrollId: bigint;
@@ -48,11 +50,11 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
 
   const stats = [
     { icon: Users, label: "Recipients", value: recipients.length.toString(), color: "#1E5EFF" },
-    { icon: DollarSign, label: "Per Cycle", value: `${formatAmount(totalPerCycle)} USDT`, color: "#8B5CF6" },
-    { icon: Wallet, label: "Escrow", value: `${escrow !== undefined ? formatAmount(escrow) : "..."} USDT`, color: "#10B981" },
+    { icon: DollarSign, label: "Per Cycle", value: `${formatAmount(totalPerCycle)} USDT`, color: "#8B5CF6", fiatAmount: totalPerCycle },
+    { icon: Wallet, label: "Escrow", value: `${escrow !== undefined ? formatAmount(escrow) : "..."} USDT`, color: "#10B981", fiatAmount: escrow },
     { icon: BarChart3, label: "Runway", value: `${runway?.toString() ?? "..."} cycles`, color: "#06B6D4" },
     { icon: CheckCircle2, label: "Completed", value: cycleCount.toString(), color: "#F59E0B" },
-    { icon: Clock, label: "Total Paid", value: `${formatAmount(totalPaid)} USDT`, color: "#EF4444" },
+    { icon: Clock, label: "Total Paid", value: `${formatAmount(totalPaid)} USDT`, color: "#EF4444", fiatAmount: totalPaid },
   ];
 
   return (
@@ -72,8 +74,20 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
             {active ? "Active" : "Cancelled"}
           </span>
         </div>
-        <div className="text-sm text-[#8B95A9] glass px-3 py-1.5 rounded-lg">
-          {frequencyToLabel(Number(frequency))}
+        <div className="flex items-center gap-2">
+          <GenerateReportButton
+            payrollName={name}
+            cycleCount={Number(cycleCount)}
+            frequency={frequencyToLabel(Number(frequency))}
+            recipients={recipients.map((r: string, idx: number) => ({
+              address: r,
+              amount: formatAmount(amounts[idx]),
+            }))}
+            totalAmount={formatAmount(totalPerCycle)}
+          />
+          <div className="text-sm text-[#8B95A9] glass px-3 py-1.5 rounded-lg">
+            {frequencyToLabel(Number(frequency))}
+          </div>
         </div>
       </div>
 
@@ -85,6 +99,9 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
               <span className="text-xs text-[#525E75]">{stat.label}</span>
             </div>
             <div className="font-semibold text-sm">{stat.value}</div>
+            {"fiatAmount" in stat && stat.fiatAmount !== undefined && (
+              <FiatValueBadge amount={stat.fiatAmount as bigint} />
+            )}
           </div>
         ))}
       </div>

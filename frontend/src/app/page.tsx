@@ -76,11 +76,35 @@ const FEATURES = [
   },
   {
     icon: BarChart3,
-    title: "CSV Export",
+    title: "Analytics & Reports",
     description:
-      "Employees can export full payment history as CSV for personal records, accounting, and tax filings.",
+      "Track payment volume, runway burn rate, and per-employee costs. Generate PDF compliance reports.",
     color: "#EF4444",
     gradient: "from-[#EF4444]/20 to-[#EF4444]/5",
+  },
+  {
+    icon: Zap,
+    title: "Gasless Claims",
+    description:
+      "Employees claim payments without gas fees. Meta-transaction relayers handle gas so your team never needs native tokens.",
+    color: "#06B6D4",
+    gradient: "from-[#06B6D4]/20 to-[#06B6D4]/5",
+  },
+  {
+    icon: Clock,
+    title: "Payment Streaming",
+    description:
+      "Real-time salary streaming. Employees earn every second with continuous on-chain payment flows.",
+    color: "#8B5CF6",
+    gradient: "from-[#8B5CF6]/20 to-[#8B5CF6]/5",
+  },
+  {
+    icon: Wallet,
+    title: "Multi-Token & Custom",
+    description:
+      "Support for USDT, USDC, HSK, WETH, and custom ERC-20 tokens. Add any token on HashKey Chain.",
+    color: "#1E5EFF",
+    gradient: "from-[#1E5EFF]/20 to-[#1E5EFF]/5",
   },
 ];
 
@@ -289,7 +313,7 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
             variants={stagger}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"
           >
             {FEATURES.map((feature, i) => (
               <motion.div

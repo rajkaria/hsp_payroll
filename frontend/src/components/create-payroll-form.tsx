@@ -7,13 +7,17 @@ import { CONTRACTS } from "@/config/contracts";
 import { parseUnits } from "viem";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2, Wallet, Lock, BarChart3 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2, Wallet, Lock, BarChart3, Waves } from "lucide-react";
+import { TokenSelector } from "./token-selector";
+import { DEFAULT_TOKENS, type TokenInfo } from "@/config/tokens";
+import { toast } from "sonner";
 
 const FREQUENCIES = [
   { label: "Weekly", value: 604800 },
   { label: "Biweekly", value: 1209600 },
   { label: "Monthly", value: 2592000 },
   { label: "Test (5 min)", value: 300 },
+  { label: "Stream", value: 1, isStreaming: true },
 ];
 
 interface Recipient {
@@ -32,6 +36,7 @@ export function CreatePayrollForm() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState(2592000);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo>(DEFAULT_TOKENS[0]);
   const [recipients, setRecipients] = useState<Recipient[]>([
     { address: "", amount: "" },
   ]);
@@ -116,31 +121,51 @@ export function CreatePayrollForm() {
 
             <div>
               <label className="block text-sm text-[#8B95A9] mb-2">Token</label>
-              <div className="px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-[#8B95A9] flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-[#10B981]/20 flex items-center justify-center">
-                  <span className="text-[10px] text-[#10B981] font-bold">$</span>
-                </div>
-                Mock USDT (Testnet)
-              </div>
+              <TokenSelector selected={selectedToken} onSelect={setSelectedToken} />
             </div>
 
             <div>
               <label className="block text-sm text-[#8B95A9] mb-2">Frequency</label>
-              <div className="grid grid-cols-4 gap-2">
-                {FREQUENCIES.map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => setFrequency(f.value)}
-                    className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      frequency === f.value
-                        ? "bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white shadow-[0_0_15px_rgba(30,94,255,0.2)]"
-                        : "bg-[#0F1629] border border-[#1A2340] text-[#8B95A9] hover:border-[#1E5EFF]/40 hover:text-white"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+              <div className="grid grid-cols-5 gap-2">
+                {FREQUENCIES.map((f) => {
+                  const isStreaming = "isStreaming" in f && f.isStreaming;
+                  return (
+                    <button
+                      key={f.value}
+                      onClick={() => {
+                        if (isStreaming) {
+                          toast.info("Streaming payments preview", {
+                            description: "Per-second salary streaming will be available soon.",
+                          });
+                        }
+                        setFrequency(f.value);
+                      }}
+                      className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                        frequency === f.value
+                          ? isStreaming
+                            ? "bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white shadow-[0_0_15px_rgba(139,92,246,0.2)]"
+                            : "bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white shadow-[0_0_15px_rgba(30,94,255,0.2)]"
+                          : isStreaming
+                            ? "bg-[#0F1629] border border-[#8B5CF6]/30 text-[#8B5CF6] hover:border-[#8B5CF6]/60"
+                            : "bg-[#0F1629] border border-[#1A2340] text-[#8B95A9] hover:border-[#1E5EFF]/40 hover:text-white"
+                      }`}
+                    >
+                      {isStreaming && <Waves className="w-3 h-3 inline mr-1" />}
+                      {f.label}
+                    </button>
+                  );
+                })}
               </div>
+              {frequency === 1 && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-xs text-[#8B5CF6] flex items-center gap-1.5"
+                >
+                  <Waves className="w-3 h-3" />
+                  Streaming delivers funds continuously every second. Preview only.
+                </motion.p>
+              )}
             </div>
 
             <button
@@ -218,7 +243,7 @@ export function CreatePayrollForm() {
               <div className="text-sm text-[#8B95A9] mb-1">Total per cycle</div>
               <div className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)]">
                 <span className="gradient-text">{totalPerCycle.toLocaleString()}</span>
-                <span className="text-sm text-[#8B95A9] ml-2 font-normal">USDT</span>
+                <span className="text-sm text-[#8B95A9] ml-2 font-normal">{selectedToken.symbol}</span>
               </div>
             </div>
 

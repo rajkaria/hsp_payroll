@@ -1,18 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@/components/connect-button";
 import { PaymentHistory } from "@/components/payment-history";
 import { CSVExport } from "@/components/csv-export";
 import { useRecipientPayrolls } from "@/hooks/usePayrolls";
 import { motion } from "framer-motion";
-import { Wallet, FileText, ArrowLeft } from "lucide-react";
+import { Wallet, FileText, ArrowLeft, Building2, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { GaslessBadge } from "@/components/gasless-badge";
+import { GaslessClaimModal } from "@/components/gasless-claim-modal";
+import { StreamingBalance } from "@/components/streaming-balance";
+import { WithdrawToBankModal } from "@/components/withdraw-to-bank-modal";
+import { EXCHANGE_RATES } from "@/lib/fiat";
 
 export default function EmployeeDashboard() {
   const { address, isConnected } = useAccount();
   const { data: payrollIds } = useRecipientPayrolls(address as `0x${string}` | undefined);
   const router = useRouter();
+  const [showGaslessModal, setShowGaslessModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
   if (!isConnected) {
     return (
@@ -52,12 +60,56 @@ export default function EmployeeDashboard() {
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
             </button>
-            <h1 className="text-3xl font-bold font-[family-name:var(--font-space-grotesk)]">
-              My <span className="gradient-text">Payments</span>
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold font-[family-name:var(--font-space-grotesk)]">
+                My <span className="gradient-text">Payments</span>
+              </h1>
+              <GaslessBadge />
+            </div>
             <p className="text-[#8B95A9] mt-1.5 text-sm">View your payment history and HSP receipts</p>
           </div>
-          <ConnectButton />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowGaslessModal(true)}
+              className="p-2.5 glass rounded-xl hover:border-[#10B981]/30 transition-all"
+              title="Gasless Claims"
+            >
+              <Zap className="w-4 h-4 text-[#10B981]" />
+            </button>
+            <button
+              onClick={() => setShowWithdrawModal(true)}
+              className="p-2.5 glass rounded-xl hover:border-[#1E5EFF]/30 transition-all"
+              title="Withdraw to Bank"
+            >
+              <Building2 className="w-4 h-4 text-[#8B95A9]" />
+            </button>
+            <ConnectButton />
+          </div>
+        </motion.div>
+
+        {/* Streaming Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6"
+        >
+          <StreamingBalance totalEarned={1247.891234} ratePerSecond={0.000385} />
+        </motion.div>
+
+        {/* Exchange Rate Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="glass rounded-xl px-4 py-2.5 mb-6 flex items-center justify-between text-xs"
+        >
+          <span className="text-[#525E75]">Exchange Rates</span>
+          <div className="flex items-center gap-4 text-[#8B95A9]">
+            <span>1 USDT = <span className="text-white font-medium">$1.00 USD</span></span>
+            <span className="w-1 h-1 rounded-full bg-[#1A2340]" />
+            <span>1 USDT = <span className="text-white font-medium">HK${EXCHANGE_RATES.HKD} HKD</span></span>
+          </div>
         </motion.div>
 
         {!hasPayrolls ? (
@@ -79,7 +131,7 @@ export default function EmployeeDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
             className="space-y-6"
           >
             <div className="flex justify-between items-center">
@@ -99,6 +151,9 @@ export default function EmployeeDashboard() {
           </motion.div>
         )}
       </div>
+
+      {showGaslessModal && <GaslessClaimModal onClose={() => setShowGaslessModal(false)} />}
+      {showWithdrawModal && <WithdrawToBankModal onClose={() => setShowWithdrawModal(false)} />}
     </div>
   );
 }
