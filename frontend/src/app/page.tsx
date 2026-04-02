@@ -282,7 +282,7 @@ export default function Home() {
                 key={feature.title}
                 custom={i}
                 variants={fadeUp}
-                className="group glass-card rounded-2xl p-6 card-hover cursor-default"
+                className="group bg-[#0E1025] border border-[#1C1E3A] rounded-2xl p-6 card-hover cursor-default"
               >
                 <div className="w-11 h-11 rounded-xl bg-[#0E1025] border border-[#1C1E3A] flex items-center justify-center mb-4 group-hover:border-[#8B5CF6]/30 group-hover:shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-all duration-300">
                   <feature.icon className="w-5 h-5 text-[#9BA3B7] group-hover:text-[#C084FC] transition-colors" />
