@@ -22,6 +22,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { MeshBackground } from "@/components/mesh-background";
+import { HowItWorksStepper } from "@/components/how-it-works-stepper";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -91,32 +92,6 @@ const STATS = [
   { icon: Clock, value: "24/7", label: "Availability" },
 ];
 
-const HOW_IT_WORKS = [
-  {
-    step: "01",
-    title: "Create Payroll",
-    description: "Set up a payroll with recipients, amounts, and payment frequency.",
-    icon: Wallet,
-  },
-  {
-    step: "02",
-    title: "Fund Escrow",
-    description: "Deposit USDT into the smart contract escrow with one approval.",
-    icon: Lock,
-  },
-  {
-    step: "03",
-    title: "Execute Cycles",
-    description: "Trigger payments when due. Each cycle distributes to all recipients.",
-    icon: Repeat,
-  },
-  {
-    step: "04",
-    title: "Verify & Export",
-    description: "Every payment has an HSP receipt. Export history as CSV anytime.",
-    icon: CheckCircle2,
-  },
-];
 
 export default function Home() {
   const { isConnected } = useAccount();
@@ -153,9 +128,9 @@ export default function Home() {
             <span className="hidden sm:block text-sm text-[#5A6178] cursor-default">
               Pricing
             </span>
-            <span className="hidden md:block text-sm text-[#5A6178] cursor-default">
+            <a href="/docs" className="hidden md:block text-sm text-[#9BA3B7] hover:text-white transition-colors">
               Documentation
-            </span>
+            </a>
             <ConnectButton />
           </div>
         </div>
@@ -326,66 +301,31 @@ export default function Home() {
 
       {/* ═══════════════ HOW IT WORKS ═══════════════ */}
       <section id="how-it-works" className="relative px-6 py-32 z-10">
-        <div className="max-w-3xl mx-auto relative">
+        <div className="max-w-5xl mx-auto">
           <motion.div
-            initial="hidden"
-            whileInView="visible"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            variants={stagger}
+            transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <motion.div variants={fadeUp} custom={0}>
-              <span className="text-xs font-semibold text-[#8B5CF6] tracking-[0.2em] uppercase">
-                How it Works
-              </span>
-            </motion.div>
-            <motion.h2
-              variants={fadeUp}
-              custom={1}
-              className="font-[family-name:var(--font-space-grotesk)] text-3xl sm:text-4xl md:text-5xl font-bold mt-4 tracking-tight"
-            >
+            <span className="text-xs font-semibold text-[#8B5CF6] tracking-[0.2em] uppercase">
+              How it Works
+            </span>
+            <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl sm:text-4xl md:text-5xl font-bold mt-4 tracking-tight">
               Four Steps to
               <br />
               <span className="gradient-text">Automated Payroll</span>
-            </motion.h2>
+            </h2>
           </motion.div>
 
           <motion.div
-            initial="hidden"
-            whileInView="visible"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
-            variants={stagger}
-            className="relative"
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
-            {/* Vertical timeline line */}
-            <div className="absolute left-7 top-8 bottom-8 w-px bg-gradient-to-b from-[#8B5CF6]/40 via-[#8B5CF6]/20 to-transparent hidden sm:block" />
-
-            <div className="space-y-5">
-              {HOW_IT_WORKS.map((item, i) => (
-                <motion.div
-                  key={item.step}
-                  custom={i}
-                  variants={fadeUp}
-                  className="group glass-card rounded-2xl p-6 flex items-start gap-5 card-hover relative"
-                >
-                  {/* Step number */}
-                  <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-[#0E1025] border border-[#1C1E3A] flex items-center justify-center relative z-10 group-hover:border-[#8B5CF6]/30 transition-all">
-                    <span className="font-[family-name:var(--font-space-grotesk)] text-lg font-bold gradient-text">
-                      {item.step}
-                    </span>
-                  </div>
-                  <div className="flex-1 pt-1">
-                    <h3 className="font-[family-name:var(--font-space-grotesk)] text-lg font-semibold mb-1.5 flex items-center gap-3">
-                      {item.title}
-                      <item.icon className="w-4 h-4 text-[#5A6178] group-hover:text-[#C084FC] transition-colors" />
-                    </h3>
-                    <p className="text-sm text-[#5A6178] leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+            <HowItWorksStepper />
           </motion.div>
         </div>
       </section>
