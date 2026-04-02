@@ -21,6 +21,7 @@ import {
   Coins,
   TrendingUp,
 } from "lucide-react";
+import { MeshBackground } from "@/components/mesh-background";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -122,9 +123,9 @@ export default function Home() {
   const router = useRouter();
 
   return (
-    <div className="relative overflow-hidden bg-mesh">
-      {/* Mesh lines overlay */}
-      <div className="bg-mesh-lines" />
+    <div className="relative overflow-hidden">
+      {/* Mesh network background */}
+      <MeshBackground />
 
       {/* ═══════════════ NAVBAR ═══════════════ */}
       <motion.nav
