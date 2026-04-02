@@ -49,7 +49,7 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   const canExecute = active && Date.now() / 1000 >= nextCycleTime;
 
   const stats = [
-    { icon: Users, label: "Recipients", value: recipients.length.toString(), color: "#1E5EFF" },
+    { icon: Users, label: "Recipients", value: recipients.length.toString(), color: "#8B5CF6" },
     { icon: DollarSign, label: "Per Cycle", value: `${formatAmount(totalPerCycle)} USDT`, color: "#8B5CF6", fiatAmount: totalPerCycle },
     { icon: Wallet, label: "Escrow", value: `${escrow !== undefined ? formatAmount(escrow) : "..."} USDT`, color: "#10B981", fiatAmount: escrow },
     { icon: BarChart3, label: "Runway", value: `${runway?.toString() ?? "..."} cycles`, color: "#06B6D4" },
@@ -110,7 +110,7 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
         <button
           onClick={() => execute(payrollId)}
           disabled={!canExecute || isPending || isConfirming}
-          className="w-full px-4 py-2.5 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none flex items-center justify-center gap-2 text-sm"
+          className="w-full px-4 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none flex items-center justify-center gap-2 text-sm"
         >
           <Zap className="w-4 h-4" />
           {isPending ? "Confirming..." : isConfirming ? "Executing..." : isSuccess ? "Executed!" : "Execute Cycle"}

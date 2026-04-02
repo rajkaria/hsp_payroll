@@ -74,7 +74,7 @@ export function GenerateReportButton({
       <button
         onClick={handleGenerate}
         disabled={loading}
-        className="p-2 text-[#8B95A9] hover:text-[#1E5EFF] hover:bg-[#1E5EFF]/10 rounded-lg transition-colors disabled:opacity-40"
+        className="p-2 text-[#8B95A9] hover:text-[#8B5CF6] hover:bg-[#1E5EFF]/10 rounded-lg transition-colors disabled:opacity-40"
         title="Generate PDF report"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
@@ -86,7 +86,7 @@ export function GenerateReportButton({
     <button
       onClick={handleGenerate}
       disabled={loading}
-      className="px-4 py-2 glass rounded-xl text-sm font-medium hover:border-[#1E5EFF]/30 transition-all flex items-center gap-2 disabled:opacity-40"
+      className="px-4 py-2 glass rounded-xl text-sm font-medium hover:border-[#8B5CF6]/30 transition-all flex items-center gap-2 disabled:opacity-40"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
       Generate Report

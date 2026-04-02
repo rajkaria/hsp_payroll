@@ -26,7 +26,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col items-center justify-center min-h-screen relative">
         <div className="fixed inset-0 bg-grid pointer-events-none" />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-2xl p-10 text-center relative">
-          <Wallet className="w-10 h-10 text-[#1E5EFF] mx-auto mb-4" />
+          <Wallet className="w-10 h-10 text-[#8B5CF6] mx-auto mb-4" />
           <p className="text-[#8B95A9] mb-6">Connect your wallet to view analytics</p>
           <ConnectButton />
         </motion.div>

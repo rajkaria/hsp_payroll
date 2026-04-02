@@ -49,7 +49,7 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
               <td className="py-3.5 px-5 font-semibold">{formatAmount(payment.amount)} USDT</td>
               <td className="py-3.5 px-5 text-[#8B95A9]">#{payment.cycleNumber.toString()}</td>
               <td className="py-3.5 px-5">
-                <span className="text-[#1E5EFF] text-xs font-mono bg-[#1E5EFF]/10 px-2 py-1 rounded-md">
+                <span className="text-[#8B5CF6] text-xs font-mono bg-[#8B5CF6]/10 px-2 py-1 rounded-md">
                   {payment.hspRequestId.slice(0, 10)}...
                 </span>
               </td>

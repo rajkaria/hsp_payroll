@@ -88,7 +88,7 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white flex items-center justify-between hover:border-[#1E5EFF]/40 transition-colors"
+        className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white flex items-center justify-between hover:border-[#8B5CF6]/40 transition-colors"
       >
         <div className="flex items-center gap-2.5">
           <TokenIcon symbol={selected.symbol} color={selected.color} icon={selected.icon} size="md" />
@@ -140,7 +140,7 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
                         </div>
                       </div>
                       {selected.address === token.address && (
-                        <Check className="w-4 h-4 text-[#1E5EFF]" />
+                        <Check className="w-4 h-4 text-[#8B5CF6]" />
                       )}
                     </button>
                   ))}
@@ -148,7 +148,7 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
                 <div className="border-t border-[#1A2340]">
                   <button
                     onClick={() => setShowAddCustom(true)}
-                    className="w-full px-4 py-2.5 text-sm text-[#1E5EFF] hover:bg-white/5 transition-colors flex items-center gap-2"
+                    className="w-full px-4 py-2.5 text-sm text-[#8B5CF6] hover:bg-white/5 transition-colors flex items-center gap-2"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Custom Token
@@ -172,7 +172,7 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
                   value={customAddress}
                   onChange={(e) => setCustomAddress(e.target.value)}
                   placeholder="Contract address (0x...)"
-                  className="w-full px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:outline-none font-mono"
+                  className="w-full px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#8B5CF6] focus:outline-none font-mono"
                 />
                 <div className="flex gap-2">
                   <input
@@ -180,14 +180,14 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
                     value={customSymbol}
                     onChange={(e) => setCustomSymbol(e.target.value.slice(0, 6))}
                     placeholder="Symbol"
-                    className="flex-1 px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:outline-none"
+                    className="flex-1 px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#8B5CF6] focus:outline-none"
                   />
                   <input
                     type="number"
                     value={customDecimals}
                     onChange={(e) => setCustomDecimals(e.target.value)}
                     placeholder="Decimals"
-                    className="w-24 px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:outline-none"
+                    className="w-24 px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#8B5CF6] focus:outline-none"
                   />
                 </div>
                 <input
@@ -195,11 +195,11 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder="Token name (optional)"
-                  className="w-full px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#0A0E1A] border border-[#1A2340] rounded-lg text-white text-sm placeholder-[#525E75] focus:border-[#8B5CF6] focus:outline-none"
                 />
                 <button
                   onClick={handleAddCustom}
-                  className="w-full px-3 py-2 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-lg text-sm font-medium hover:shadow-[0_0_15px_rgba(30,94,255,0.25)] transition-all"
+                  className="w-full px-3 py-2 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-lg text-sm font-medium hover:shadow-[0_0_15px_rgba(139,92,246,0.25)] transition-all"
                 >
                   Add Token
                 </button>

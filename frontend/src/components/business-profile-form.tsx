@@ -40,7 +40,7 @@ export function BusinessProfileForm() {
   };
 
   const inputClass =
-    "w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors text-sm";
+    "w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/20 focus:outline-none transition-colors text-sm";
 
   return (
     <div className="space-y-8">
@@ -87,7 +87,7 @@ export function BusinessProfileForm() {
 
       <button
         onClick={handleSave}
-        className="w-full px-4 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 flex items-center justify-center gap-2"
       >
         {saved ? (
           <><Check className="w-4 h-4" /> Saved</>

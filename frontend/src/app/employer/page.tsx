@@ -31,7 +31,7 @@ export default function EmployerDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-2xl p-10 text-center relative"
         >
-          <Wallet className="w-10 h-10 text-[#1E5EFF] mx-auto mb-4" />
+          <Wallet className="w-10 h-10 text-[#8B5CF6] mx-auto mb-4" />
           <p className="text-[#8B95A9] mb-6">Connect your wallet to manage payrolls</p>
           <ConnectButton />
         </motion.div>
@@ -45,7 +45,7 @@ export default function EmployerDashboard() {
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 bg-grid pointer-events-none" />
-      <div className="fixed top-0 right-0 w-[400px] h-[400px] bg-[#1E5EFF]/[0.03] rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[400px] h-[400px] bg-[#8B5CF6]/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-6 py-8 relative">
         <motion.div
@@ -83,7 +83,7 @@ export default function EmployerDashboard() {
             </button>
             <button
               onClick={() => router.push("/employer/create")}
-              className="group px-5 py-2.5 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 flex items-center gap-2 text-sm"
+              className="group px-5 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 flex items-center gap-2 text-sm"
             >
               <Plus className="w-4 h-4" />
               Create Payroll
@@ -99,8 +99,8 @@ export default function EmployerDashboard() {
             transition={{ delay: 0.2 }}
             className="glass rounded-2xl p-16 text-center"
           >
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1E5EFF]/20 to-[#8B5CF6]/10 flex items-center justify-center mx-auto mb-5">
-              <Wallet className="w-8 h-8 text-[#1E5EFF]" />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#8B5CF6]/20 to-[#C084FC]/10 flex items-center justify-center mx-auto mb-5">
+              <Wallet className="w-8 h-8 text-[#8B5CF6]" />
             </div>
             <div className="text-[#8B95A9] text-lg mb-2">No payrolls yet</div>
             <p className="text-sm text-[#525E75] mb-6 max-w-sm mx-auto">
@@ -108,7 +108,7 @@ export default function EmployerDashboard() {
             </p>
             <button
               onClick={() => router.push("/employer/create")}
-              className="group px-6 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_30px_rgba(30,94,255,0.3)] transition-all duration-300 flex items-center gap-2 mx-auto"
+              className="group px-6 py-3 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_30px_rgba(139,92,246,0.3)] transition-all duration-300 flex items-center gap-2 mx-auto"
             >
               Create Your First Payroll
               <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />

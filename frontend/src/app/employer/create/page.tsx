@@ -20,7 +20,7 @@ export default function CreatePayrollPage() {
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-2xl p-10 text-center relative"
         >
-          <Wallet className="w-10 h-10 text-[#1E5EFF] mx-auto mb-4" />
+          <Wallet className="w-10 h-10 text-[#8B5CF6] mx-auto mb-4" />
           <p className="text-[#8B95A9] mb-6">Connect your wallet to continue</p>
           <ConnectButton />
         </motion.div>
@@ -31,7 +31,7 @@ export default function CreatePayrollPage() {
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 bg-grid pointer-events-none" />
-      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#1E5EFF]/[0.03] rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#8B5CF6]/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-4xl mx-auto px-6 py-8 relative">
         <motion.div

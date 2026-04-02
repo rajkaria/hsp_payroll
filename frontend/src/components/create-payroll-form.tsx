@@ -115,7 +115,7 @@ export function CreatePayrollForm() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Team Alpha Monthly"
-                className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/20 focus:outline-none transition-colors"
               />
             </div>
 
@@ -144,10 +144,10 @@ export function CreatePayrollForm() {
                         frequency === f.value
                           ? isStreaming
                             ? "bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white shadow-[0_0_15px_rgba(139,92,246,0.2)]"
-                            : "bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white shadow-[0_0_15px_rgba(30,94,255,0.2)]"
+                            : "bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white shadow-[0_0_15px_rgba(139,92,246,0.2)]"
                           : isStreaming
                             ? "bg-[#0F1629] border border-[#8B5CF6]/30 text-[#8B5CF6] hover:border-[#8B5CF6]/60"
-                            : "bg-[#0F1629] border border-[#1A2340] text-[#8B95A9] hover:border-[#1E5EFF]/40 hover:text-white"
+                            : "bg-[#0F1629] border border-[#1A2340] text-[#8B95A9] hover:border-[#8B5CF6]/40 hover:text-white"
                       }`}
                     >
                       {isStreaming && <Waves className="w-3 h-3 inline mr-1" />}
@@ -171,7 +171,7 @@ export function CreatePayrollForm() {
             <button
               onClick={() => setStep(2)}
               disabled={!name}
-              className="w-full px-4 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               Next: Add Recipients
               <ArrowRight className="w-4 h-4" />
@@ -207,7 +207,7 @@ export function CreatePayrollForm() {
                       value={r.address}
                       onChange={(e) => updateRecipient(i, "address", e.target.value)}
                       placeholder="0x... wallet address"
-                      className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors font-mono"
+                      className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white text-sm placeholder-[#525E75] focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/20 focus:outline-none transition-colors font-mono"
                     />
                   </div>
                   <div className="w-32">
@@ -216,7 +216,7 @@ export function CreatePayrollForm() {
                       value={r.amount}
                       onChange={(e) => updateRecipient(i, "amount", e.target.value)}
                       placeholder="Amount"
-                      className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white text-sm placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white text-sm placeholder-[#525E75] focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/20 focus:outline-none transition-colors"
                     />
                   </div>
                   {recipients.length > 1 && (
@@ -233,7 +233,7 @@ export function CreatePayrollForm() {
 
             <button
               onClick={addRecipient}
-              className="flex items-center gap-2 text-[#1E5EFF] text-sm font-medium hover:text-[#4B7FFF] transition-colors"
+              className="flex items-center gap-2 text-[#8B5CF6] text-sm font-medium hover:text-[#4B7FFF] transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add another recipient
@@ -250,7 +250,7 @@ export function CreatePayrollForm() {
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 px-4 py-3 glass rounded-xl font-medium hover:border-[#1E5EFF]/30 transition-all flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 glass rounded-xl font-medium hover:border-[#8B5CF6]/30 transition-all flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
@@ -258,7 +258,7 @@ export function CreatePayrollForm() {
               <button
                 onClick={() => { handleCreate(); setStep(3); }}
                 disabled={recipients.some((r) => !r.address || !r.amount)}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {isCreating ? (
                   <>
@@ -297,7 +297,7 @@ export function CreatePayrollForm() {
                 value={fundAmount}
                 onChange={(e) => setFundAmount(e.target.value)}
                 placeholder="e.g., 10000"
-                className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF]/20 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 bg-[#0F1629] border border-[#1A2340] rounded-xl text-white placeholder-[#525E75] focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/20 focus:outline-none transition-colors"
               />
               {totalPerCycle > 0 && fundAmount && (
                 <div className="mt-2 text-sm text-[#8B95A9] flex items-center gap-1.5">
@@ -314,7 +314,7 @@ export function CreatePayrollForm() {
                 className={`w-full px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                   approveSuccess
                     ? "bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/20"
-                    : "glass hover:border-[#1E5EFF]/40 text-[#1E5EFF] disabled:opacity-40"
+                    : "glass hover:border-[#8B5CF6]/40 text-[#8B5CF6] disabled:opacity-40"
                 }`}
               >
                 {isApproving ? (
@@ -330,7 +330,7 @@ export function CreatePayrollForm() {
               <button
                 onClick={handleFund}
                 disabled={!approveSuccess || isFunding || isFundingConfirm}
-                className="w-full px-4 py-3 bg-gradient-to-r from-[#1E5EFF] to-[#4B7FFF] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(30,94,255,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {isFunding ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Confirm in wallet...</>
