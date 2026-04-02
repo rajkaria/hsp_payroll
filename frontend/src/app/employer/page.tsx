@@ -51,7 +51,7 @@ export default function EmployerDashboard() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center mb-10"
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10"
         >
           <div>
             <button
@@ -66,27 +66,28 @@ export default function EmployerDashboard() {
             </h1>
             <p className="text-[#8B95A9] mt-1.5 text-sm">Manage your on-chain payrolls</p>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <button
               onClick={() => router.push("/employer/profile")}
-              className="p-2.5 glass rounded-xl hover:border-[#1E5EFF]/30 transition-all"
+              className="p-2.5 glass rounded-xl hover:border-[#8B5CF6]/30 transition-all"
               title="Business Profile"
             >
-              <Building2 className="w-4 h-4 text-[#8B95A9]" />
+              <Building2 className="w-4 h-4 text-[#9BA3B7]" />
             </button>
             <button
               onClick={() => router.push("/employer/analytics")}
               className="p-2.5 glass rounded-xl hover:border-[#8B5CF6]/30 transition-all"
               title="Analytics"
             >
-              <BarChart3 className="w-4 h-4 text-[#8B95A9]" />
+              <BarChart3 className="w-4 h-4 text-[#9BA3B7]" />
             </button>
             <button
               onClick={() => router.push("/employer/create")}
-              className="group px-5 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 flex items-center gap-2 text-sm"
+              className="group px-4 sm:px-5 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 flex items-center gap-2 text-sm"
             >
               <Plus className="w-4 h-4" />
-              Create Payroll
+              <span className="hidden sm:inline">Create Payroll</span>
+              <span className="sm:hidden">Create</span>
             </button>
             <ConnectButton />
           </div>

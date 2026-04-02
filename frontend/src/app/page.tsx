@@ -125,11 +125,11 @@ export default function Home() {
             <a href="#how-it-works" className="hidden sm:block text-sm text-[#9BA3B7] hover:text-white transition-colors">
               How it Works
             </a>
-            <span className="hidden sm:block text-sm text-[#5A6178] cursor-default">
-              Pricing
-            </span>
+            <a href="/faucet" className="hidden sm:block text-sm text-[#9BA3B7] hover:text-white transition-colors">
+              Faucet
+            </a>
             <a href="/docs" className="hidden md:block text-sm text-[#9BA3B7] hover:text-white transition-colors">
-              Documentation
+              Docs
             </a>
             <ConnectButton />
           </div>

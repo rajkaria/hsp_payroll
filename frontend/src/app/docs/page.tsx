@@ -82,7 +82,7 @@ export default function DocsPage() {
       <div className="fixed inset-0 bg-grid pointer-events-none" />
       <div className="fixed top-0 right-1/4 w-[500px] h-[500px] bg-[#8B5CF6]/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 py-8 relative flex gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative flex gap-8">
         {/* Sidebar */}
         <aside className="hidden lg:block w-56 flex-shrink-0">
           <div className="sticky top-8">
@@ -125,6 +125,20 @@ export default function DocsPage() {
 
         {/* Main content */}
         <main className="flex-1 min-w-0 max-w-3xl">
+          {/* Mobile back + nav */}
+          <div className="lg:hidden mb-6">
+            <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-sm text-[#5A6178] hover:text-white transition-colors mb-4">
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+            </button>
+            <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1">
+              {NAV_SECTIONS.map((s) => (
+                <a key={s.id} href={`#${s.id}`} onClick={() => setActiveSection(s.id)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs transition-all ${activeSection === s.id ? "bg-[#8B5CF6]/10 text-white border border-[#8B5CF6]/20" : "text-[#5A6178] hover:text-[#9BA3B7]"}`}>
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          </div>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
             <h1 className="font-[family-name:var(--font-space-grotesk)] text-4xl font-bold mb-3 tracking-tight">
               Hash<span className="gradient-text">Pay</span> Documentation

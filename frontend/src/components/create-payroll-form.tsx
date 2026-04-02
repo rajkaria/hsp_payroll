@@ -7,7 +7,7 @@ import { CONTRACTS } from "@/config/contracts";
 import { parseUnits } from "viem";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2, Wallet, Lock, BarChart3, Waves } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2, Wallet, Lock, BarChart3, Waves, Users, Code2, Briefcase, Palette } from "lucide-react";
 import { TokenSelector } from "./token-selector";
 import { DEFAULT_TOKENS, type TokenInfo } from "@/config/tokens";
 import { toast } from "sonner";
@@ -24,6 +24,49 @@ interface Recipient {
   address: string;
   amount: string;
 }
+
+const TEMPLATES = [
+  {
+    icon: Code2,
+    name: "Engineering Team",
+    payrollName: "Engineering Monthly",
+    frequency: 2592000,
+    recipients: [
+      { address: "", amount: "8000" },
+      { address: "", amount: "7500" },
+      { address: "", amount: "6000" },
+    ],
+  },
+  {
+    icon: Briefcase,
+    name: "Contractor Weekly",
+    payrollName: "Contractors Weekly",
+    frequency: 604800,
+    recipients: [
+      { address: "", amount: "2000" },
+      { address: "", amount: "1500" },
+    ],
+  },
+  {
+    icon: Palette,
+    name: "Design Team",
+    payrollName: "Design Biweekly",
+    frequency: 1209600,
+    recipients: [
+      { address: "", amount: "5000" },
+      { address: "", amount: "4500" },
+    ],
+  },
+  {
+    icon: Users,
+    name: "Quick Test",
+    payrollName: "Test Payroll",
+    frequency: 300,
+    recipients: [
+      { address: "", amount: "100" },
+    ],
+  },
+];
 
 const stepVariants = {
   enter: { opacity: 0, x: 30 },
@@ -52,6 +95,13 @@ export function CreatePayrollForm() {
     const updated = [...recipients];
     updated[index][field] = value;
     setRecipients(updated);
+  };
+
+  const applyTemplate = (t: typeof TEMPLATES[0]) => {
+    setName(t.payrollName);
+    setFrequency(t.frequency);
+    setRecipients(t.recipients.map((r) => ({ ...r })));
+    toast.success(`Template "${t.name}" applied`);
   };
 
   const totalPerCycle = recipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
@@ -108,8 +158,27 @@ export function CreatePayrollForm() {
               Payroll <span className="gradient-text">Details</span>
             </h2>
 
+            {/* Templates */}
             <div>
-              <label className="block text-sm text-[#8B95A9] mb-2">Payroll Name</label>
+              <label className="block text-sm text-[#9BA3B7] mb-2">Start from a template</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {TEMPLATES.map((t) => (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    className="group p-3 bg-[#0E1025] border border-[#1C1E3A] rounded-xl text-left hover:border-[#8B5CF6]/30 hover:shadow-[0_0_12px_rgba(139,92,246,0.06)] transition-all"
+                  >
+                    <t.icon className="w-4 h-4 text-[#5A6178] group-hover:text-[#C084FC] transition-colors mb-1.5" />
+                    <div className="text-xs font-medium">{t.name}</div>
+                    <div className="text-[10px] text-[#5A6178]">{t.recipients.length} recipients</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-[#9BA3B7] mb-2">Payroll Name</label>
               <input
                 type="text"
                 value={name}

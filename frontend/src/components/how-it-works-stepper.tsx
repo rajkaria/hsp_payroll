@@ -59,9 +59,9 @@ export function HowItWorksStepper() {
   const current = STEPS[activeStep];
 
   return (
-    <div className="grid lg:grid-cols-[280px_1fr] gap-8">
+    <div className="grid lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">
       {/* Step selector - left column */}
-      <div className="flex lg:flex-col gap-2">
+      <div className="flex lg:flex-col gap-1.5 sm:gap-2 overflow-x-auto">
         {STEPS.map((step, i) => {
           const isActive = i === activeStep;
           const isPast = i < activeStep;

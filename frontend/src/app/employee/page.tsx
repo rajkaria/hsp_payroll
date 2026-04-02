@@ -50,7 +50,7 @@ export default function EmployeeDashboard() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center mb-10"
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10"
         >
           <div>
             <button

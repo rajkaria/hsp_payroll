@@ -3,9 +3,11 @@
 import { usePayrollDetails, useEscrowBalance, useRunway } from "@/hooks/usePayrolls";
 import { useExecuteCycle } from "@/hooks/useExecuteCycle";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
-import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap } from "lucide-react";
+import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink } from "lucide-react";
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
+import { getExplorerTxUrl } from "@/config/wagmi";
+import { useAccount } from "wagmi";
 
 interface PayrollCardProps {
   payrollId: bigint;
@@ -15,7 +17,8 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   const { data: details, isLoading } = usePayrollDetails(payrollId);
   const { data: escrow } = useEscrowBalance(payrollId);
   const { data: runway } = useRunway(payrollId);
-  const { execute, isPending, isConfirming, isSuccess } = useExecuteCycle();
+  const { execute, hash, isPending, isConfirming, isSuccess } = useExecuteCycle();
+  const { chain } = useAccount();
 
   if (isLoading || !details) {
     return (
@@ -58,8 +61,8 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   ];
 
   return (
-    <div className="glass rounded-2xl p-6 card-hover">
-      <div className="flex justify-between items-start mb-6">
+    <div className="glass rounded-2xl p-4 sm:p-6 card-hover">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6">
         <div>
           <h3 className="text-lg font-semibold font-[family-name:var(--font-space-grotesk)] mb-2">
             {name}
@@ -85,18 +88,18 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
             }))}
             totalAmount={formatAmount(totalPerCycle)}
           />
-          <div className="text-sm text-[#8B95A9] glass px-3 py-1.5 rounded-lg">
+          <div className="text-sm text-[#9BA3B7] glass px-3 py-1.5 rounded-lg">
             {frequencyToLabel(Number(frequency))}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-[#0A0E1A]/50 rounded-xl p-3">
+          <div key={stat.label} className="bg-[#0A0B14]/50 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <stat.icon className="w-3.5 h-3.5" style={{ color: stat.color }} />
-              <span className="text-xs text-[#525E75]">{stat.label}</span>
+              <span className="text-xs text-[#5A6178]">{stat.label}</span>
             </div>
             <div className="font-semibold text-sm">{stat.value}</div>
             {"fiatAmount" in stat && stat.fiatAmount !== undefined && (
@@ -117,8 +120,21 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
         </button>
       )}
 
-      {lastExecuted > 0n && (
-        <div className="mt-3 text-xs text-[#525E75] text-center">
+      {/* Tx hash + explorer link */}
+      {isSuccess && hash && (
+        <a
+          href={getExplorerTxUrl(hash, chain?.id)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#8B5CF6] hover:text-[#C084FC] transition-colors"
+        >
+          <ExternalLink className="w-3 h-3" />
+          View on Explorer
+        </a>
+      )}
+
+      {lastExecuted > 0n && !isSuccess && (
+        <div className="mt-3 text-xs text-[#5A6178] text-center">
           Last executed: {formatDate(Number(lastExecuted))}
         </div>
       )}
