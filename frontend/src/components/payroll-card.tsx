@@ -3,9 +3,10 @@
 import { usePayrollDetails, useEscrowBalance, useRunway } from "@/hooks/usePayrolls";
 import { useExecuteCycle } from "@/hooks/useExecuteCycle";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
-import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink } from "lucide-react";
+import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield } from "lucide-react";
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
+import { HSPPaymentButton } from "./hsp-payment-button";
 import { getExplorerTxUrl } from "@/config/wagmi";
 import { useAccount } from "wagmi";
 
@@ -131,6 +132,18 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
           <ExternalLink className="w-3 h-3" />
           View on Explorer
         </a>
+      )}
+
+      {/* HSP Payment option */}
+      {active && (
+        <div className="mt-3">
+          <HSPPaymentButton
+            payrollId={payrollId}
+            cycleNumber={Number(cycleCount) + 1}
+            totalAmount={formatAmount(totalPerCycle)}
+            recipientCount={recipients.length}
+          />
+        </div>
       )}
 
       {lastExecuted > 0n && !isSuccess && (

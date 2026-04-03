@@ -7,6 +7,7 @@ import { SummaryCards } from "@/components/analytics/summary-cards";
 import { PaymentVolumeChart } from "@/components/analytics/payment-volume-chart";
 import { BurnRateChart } from "@/components/analytics/burn-rate-chart";
 import { CostBreakdownChart } from "@/components/analytics/cost-breakdown-chart";
+import { AIIntelligencePanel } from "@/components/ai-intelligence";
 import { generatePaymentVolume, generateBurnRate, generateCostBreakdown, generateSummaryStats } from "@/lib/mock-analytics";
 import { motion } from "framer-motion";
 import { ArrowLeft, Wallet } from "lucide-react";
@@ -58,6 +59,18 @@ export default function AnalyticsPage() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-6">
           <SummaryCards stats={stats} />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-6">
+          <AIIntelligencePanel payrollData={{
+            payrollName: "Team Alpha Monthly",
+            token: "USDT",
+            recipientCount: stats.totalEmployees,
+            amountPerCycle: stats.avgCycleCost,
+            frequency: "Monthly",
+            escrowBalance: stats.totalPaid * 0.3,
+            cyclesExecuted: Math.floor(stats.totalPaid / stats.avgCycleCost),
+          }} />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid lg:grid-cols-2 gap-5 mb-5">

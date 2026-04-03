@@ -3,6 +3,8 @@ export const CONTRACTS = {
   HSP_ADAPTER: "0xa31558b2c364B269Ac823798AefcA7E285Af3487",
   PAYROLL_FACTORY: "0x3120bf2Ec2de2c6a9B75D14F2393EBa6518217cb",
   MOCK_USDT: "0xcd367c583fd028C12Cc038d744cE7B2a67d848E2",
+  PAYROLL_ATTESTOR: "0x0000000000000000000000000000000000000000", // Update after deployment
+  EAS: "0x4200000000000000000000000000000000000021",
 } as const;
 
 export const PAYROLL_FACTORY_ABI = [
@@ -240,6 +242,68 @@ export const MOCK_ERC20_ABI = [
     inputs: [],
     name: "symbol",
     outputs: [{ name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const PAYROLL_ATTESTOR_ABI = [
+  {
+    inputs: [
+      { name: "payrollId", type: "uint256" },
+      { name: "cycleNumber", type: "uint256" },
+      { name: "employer", type: "address" },
+      { name: "token", type: "address" },
+      { name: "tokenSymbol", type: "string" },
+    ],
+    name: "attestCycle",
+    outputs: [{ name: "", type: "bytes32[]" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "schemaUID",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "attestationUID", type: "bytes32" },
+      { indexed: true, name: "payrollId", type: "uint256" },
+      { indexed: false, name: "cycleNumber", type: "uint256" },
+      { indexed: true, name: "recipient", type: "address" },
+      { indexed: false, name: "amount", type: "uint256" },
+    ],
+    name: "PayrollAttested",
+    type: "event",
+  },
+] as const;
+
+export const EAS_ABI = [
+  {
+    inputs: [{ name: "uid", type: "bytes32" }],
+    name: "getAttestation",
+    outputs: [
+      {
+        components: [
+          { name: "uid", type: "bytes32" },
+          { name: "schema", type: "bytes32" },
+          { name: "time", type: "uint64" },
+          { name: "expirationTime", type: "uint64" },
+          { name: "revocationTime", type: "uint64" },
+          { name: "refUID", type: "bytes32" },
+          { name: "recipient", type: "address" },
+          { name: "attester", type: "address" },
+          { name: "revocable", type: "bool" },
+          { name: "data", type: "bytes" },
+        ],
+        name: "",
+        type: "tuple",
+      },
+    ],
     stateMutability: "view",
     type: "function",
   },
