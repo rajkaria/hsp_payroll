@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits } from "viem";
 import { ConnectButton } from "@/components/connect-button";
@@ -23,13 +24,25 @@ export default function FaucetPage() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  const { data: balance } = useReadContract({
+  const { data: balance, refetch: refetchBalance } = useReadContract({
     address: CONTRACTS.MOCK_USDT as `0x${string}`,
     abi: MOCK_ERC20_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: { enabled: !!address },
   });
+
+  // Auto-refetch balance after successful mint
+  const prevSuccess = useRef(false);
+  useEffect(() => {
+    if (isSuccess && !prevSuccess.current) {
+      prevSuccess.current = true;
+      refetchBalance();
+    }
+    if (!isSuccess) {
+      prevSuccess.current = false;
+    }
+  }, [isSuccess, refetchBalance]);
 
   const handleMint = (amount: string) => {
     if (!address) return;
