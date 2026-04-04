@@ -48,7 +48,7 @@ On-chain recurring payroll platform for DAOs, crypto-native teams, and freelance
 - **EAS Attestations** — Permanent on-chain proof-of-payment via Ethereum Attestation Service
 - **Payment Verification** — Public `/verify` page for independent attestation verification
 - **Multi-Recipient** — Pay unlimited team members in a single cycle execution
-- **Multi-Token + Custom** — USDT default, add any custom ERC-20 token on HashKey Chain
+- **Custom Token Support** — USDT default, add any custom ERC-20 token on HashKey Chain
 - **Multi-Chain** — HashKey Chain testnet (133) and mainnet (177) support
 - **Payroll Templates** — Pre-built templates (Engineering, Contractor, Design, Quick Test)
 - **Access Control** — HSPAdapter restricted to authorized callers only
@@ -63,9 +63,7 @@ On-chain recurring payroll platform for DAOs, crypto-native teams, and freelance
 ### Employee Experience
 - **Real Payment History** — On-chain receipts fetched and displayed per payroll/cycle
 - **Fiat Conversion** — USD/HKD value badges on all amounts
-- **Payment Streaming** — Live-ticking balance counter (preview)
-- **Gasless Claims** — ERC-2771 meta-transaction preview
-- **Fiat Off-Ramp** — Withdraw-to-bank preview with exchange rates
+- **CSV Export** — Full payment history export for accounting and tax filing
 
 ### Developer Experience
 - **Token Faucet** — One-click Mock USDT minting with auto-refreshing balance
@@ -82,7 +80,7 @@ On-chain recurring payroll platform for DAOs, crypto-native teams, and freelance
 | `/employer/create` | Multi-step payroll creation wizard with templates |
 | `/employer/analytics` | Payment volume, burn rate, cost charts, AI intelligence panel |
 | `/employer/profile` | Business profile for compliance reports |
-| `/employee` | Employee dashboard — real payment history, streaming, fiat conversion |
+| `/employee` | Employee dashboard — real on-chain payment history, fiat conversion |
 | `/faucet` | Token faucet — mint testnet USDT with auto-balance refresh |
 | `/verify` | Public payment verification via EAS attestation lookup |
 | `/docs` | User-facing documentation with Quick Start, guides, FAQ |

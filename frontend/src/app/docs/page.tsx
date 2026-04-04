@@ -236,12 +236,9 @@ export default function DocsPage() {
             <h3 className="text-white font-semibold mt-6 mb-3">What You&apos;ll See</h3>
             <div className="space-y-3 my-4">
               {[
-                { icon: Repeat, title: "Streaming Balance", desc: "A live counter showing your accumulated earnings ticking up in real time (preview feature — demonstrates per-second salary streaming)." },
-                { icon: Coins, title: "Fiat Conversion", desc: "All USDT amounts show their approximate value in USD and HKD. An exchange rate bar at the top shows current conversion rates." },
                 { icon: FileText, title: "Payment History", desc: "Real on-chain payment data fetched from the blockchain. Shows date, amount (with USD value), cycle number, HSP receipt ID, and settlement status." },
+                { icon: Coins, title: "Fiat Conversion", desc: "All USDT amounts show their approximate USD value alongside the token amount." },
                 { icon: FileText, title: "CSV Export", desc: "Download your complete payment history as a CSV file for accounting, tax filing, or personal records." },
-                { icon: Zap, title: "Gasless Claims", desc: "Preview of a feature that will let you claim payments without paying gas fees (coming soon)." },
-                { icon: Building2, title: "Withdraw to Bank", desc: "Preview of fiat off-ramp — shows estimated HKD conversion and bank withdrawal flow (coming soon)." },
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-3 glass rounded-xl p-4">
                   <item.icon className="w-4 h-4 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
@@ -385,6 +382,7 @@ export default function DocsPage() {
                 { title: "Immutable Receipts", desc: "HSP receipts and EAS attestations cannot be altered, backdated, or deleted after creation." },
                 { title: "Owner-Only Actions", desc: "Only the wallet that created a payroll can execute cycles, add/remove recipients, fund, cancel, or withdraw. No admin backdoors." },
                 { title: "HSP Access Control", desc: "The HSP settlement layer restricts confirm/settle/cancel operations to authorized contracts only. Unauthorized callers are rejected." },
+                { title: "Reentrancy Protection", desc: "All fund-moving operations (execute, fund, cancel, withdraw) are protected by OpenZeppelin's ReentrancyGuard." },
                 { title: "Open Source", desc: "All smart contracts and frontend code are open source and available on GitHub for independent review." },
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-3 glass rounded-xl p-4">
@@ -420,7 +418,7 @@ export default function DocsPage() {
                 <p>Nothing bad. Cycles don&apos;t execute automatically — you trigger them manually when ready. If you&apos;re late, the payment simply happens when you click the button. There&apos;s no penalty for delayed execution.</p>
               </FAQ>
               <FAQ q="Can recipients see their pending payments?">
-                <p>Recipients can see their payment history on the employee dashboard. They can view amounts, dates, HSP receipt IDs, and export everything as CSV. The streaming balance preview shows accumulated earnings in real time.</p>
+                <p>Recipients can see their payment history on the employee dashboard. They can view amounts with USD conversion, dates, HSP receipt IDs, and export everything as CSV.</p>
               </FAQ>
               <FAQ q="How do compliance reports work?">
                 <p>Set up your business profile (company name, registration number, address). Then click the report icon on any payroll card to download a PDF with your company header, a table of all payments, HSP receipt IDs, and totals. Useful for tax filing and audits.</p>
