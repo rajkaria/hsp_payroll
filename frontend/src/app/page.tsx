@@ -12,12 +12,10 @@ import {
   ArrowRight,
   Zap,
   Lock,
-  BarChart3,
   Users,
   Clock,
   CheckCircle2,
   Sparkles,
-  Timer,
   Coins,
   TrendingUp,
 } from "lucide-react";
@@ -67,21 +65,6 @@ const FEATURES = [
     icon: TrendingUp,
     title: "Analytics & Reports",
     description: "Track payment volume, burn rate, and per-employee costs. Download PDF reports.",
-  },
-  {
-    icon: Zap,
-    title: "Gasless Claims",
-    description: "Employees claim payments without gas fees via ERC-2771 meta-transactions.",
-  },
-  {
-    icon: Timer,
-    title: "Payment Streaming",
-    description: "Real-time salary streaming. Employees earn every second continuously.",
-  },
-  {
-    icon: Coins,
-    title: "Multi-Token & Custom",
-    description: "USDT, USDC, HSK, WETH, and custom ERC-20 tokens on HashKey Chain.",
   },
 ];
 
@@ -275,7 +258,7 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
             variants={stagger}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"
           >
             {FEATURES.map((feature, i) => (
               <motion.div

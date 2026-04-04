@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./HSPAdapter.sol";
 
-contract PayrollFactory {
+contract PayrollFactory is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct Payroll {
@@ -94,7 +95,7 @@ contract PayrollFactory {
         emit PayrollCreated(payrollId, msg.sender, token, name);
     }
 
-    function fundPayroll(uint256 payrollId, uint256 amount) external onlyPayrollOwner(payrollId) {
+    function fundPayroll(uint256 payrollId, uint256 amount) external onlyPayrollOwner(payrollId) nonReentrant {
         Payroll storage p = payrolls[payrollId];
         require(p.active, "Payroll not active");
 
@@ -105,7 +106,7 @@ contract PayrollFactory {
         emit PayrollFunded(payrollId, amount, escrowBalances[payrollId]);
     }
 
-    function executeCycle(uint256 payrollId) external onlyPayrollOwner(payrollId) {
+    function executeCycle(uint256 payrollId) external onlyPayrollOwner(payrollId) nonReentrant {
         Payroll storage p = payrolls[payrollId];
         require(p.active, "Payroll not active");
         if (p.lastExecuted > 0) {
@@ -149,7 +150,7 @@ contract PayrollFactory {
         emit CycleExecuted(payrollId, cycleNumber, cycleCost);
     }
 
-    function cancelPayroll(uint256 payrollId) external onlyPayrollOwner(payrollId) {
+    function cancelPayroll(uint256 payrollId) external onlyPayrollOwner(payrollId) nonReentrant {
         Payroll storage p = payrolls[payrollId];
         require(p.active, "Already cancelled");
 
@@ -163,7 +164,7 @@ contract PayrollFactory {
         emit PayrollCancelled(payrollId, refund);
     }
 
-    function withdrawExcess(uint256 payrollId, uint256 amount) external onlyPayrollOwner(payrollId) {
+    function withdrawExcess(uint256 payrollId, uint256 amount) external onlyPayrollOwner(payrollId) nonReentrant {
         require(escrowBalances[payrollId] >= amount, "Insufficient balance");
         escrowBalances[payrollId] -= amount;
         IERC20(payrolls[payrollId].token).safeTransfer(msg.sender, amount);

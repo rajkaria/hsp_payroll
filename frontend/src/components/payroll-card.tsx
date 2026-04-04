@@ -1,27 +1,63 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePayrollDetails, useEscrowBalance, useRunway } from "@/hooks/usePayrolls";
 import { useExecuteCycle } from "@/hooks/useExecuteCycle";
 import { useAttestCycle } from "@/hooks/useAttestation";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
-import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2 } from "lucide-react";
+import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2, Timer } from "lucide-react";
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
 import { HSPPaymentButton } from "./hsp-payment-button";
 import { getExplorerTxUrl } from "@/config/wagmi";
 import { useAccount } from "wagmi";
+import { toast } from "sonner";
 
 interface PayrollCardProps {
   payrollId: bigint;
+}
+
+function formatCountdown(seconds: number): string {
+  if (seconds <= 0) return "Ready";
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 }
 
 export function PayrollCard({ payrollId }: PayrollCardProps) {
   const { data: details, isLoading } = usePayrollDetails(payrollId);
   const { data: escrow } = useEscrowBalance(payrollId);
   const { data: runway } = useRunway(payrollId);
-  const { execute, hash, isPending, isConfirming, isSuccess } = useExecuteCycle();
-  const { attest, hash: attestHash, isPending: attestPending, isConfirming: attestConfirming, isSuccess: attestSuccess } = useAttestCycle();
+  const { execute, hash, isPending, isConfirming, isSuccess, error: executeError } = useExecuteCycle();
+  const { attest, hash: attestHash, isPending: attestPending, isConfirming: attestConfirming, isSuccess: attestSuccess, error: attestError } = useAttestCycle();
   const { chain, address } = useAccount();
+  const [now, setNow] = useState(Date.now() / 1000);
+
+  // Update countdown every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now() / 1000), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Error toasts
+  useEffect(() => {
+    if (executeError) {
+      toast.error("Transaction failed", {
+        description: executeError.message.slice(0, 120),
+      });
+    }
+  }, [executeError]);
+
+  useEffect(() => {
+    if (attestError) {
+      toast.error("Attestation failed", {
+        description: attestError.message.slice(0, 120),
+      });
+    }
+  }, [attestError]);
 
   if (isLoading || !details) {
     return (
@@ -52,7 +88,8 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
     ? Number(lastExecuted + frequency)
     : Number(startTime);
 
-  const canExecute = active && Date.now() / 1000 >= nextCycleTime;
+  const canExecute = active && now >= nextCycleTime;
+  const secondsUntilNext = nextCycleTime - now;
 
   const stats = [
     { icon: Users, label: "Recipients", value: recipients.length.toString(), color: "#8B5CF6" },
@@ -70,15 +107,28 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
           <h3 className="text-lg font-semibold font-[family-name:var(--font-space-grotesk)] mb-2">
             {name}
           </h3>
-          <span
-            className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-              active
-                ? "bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/20"
-                : "bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/20"
-            }`}
-          >
-            {active ? "Active" : "Cancelled"}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                active
+                  ? "bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/20"
+                  : "bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/20"
+              }`}
+            >
+              {active ? "Active" : "Cancelled"}
+            </span>
+            {/* Next cycle countdown */}
+            {active && (
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1 ${
+                canExecute
+                  ? "bg-[#10B981]/10 text-[#34D399] border border-[#10B981]/15"
+                  : "bg-[#8B5CF6]/10 text-[#C084FC] border border-[#8B5CF6]/15"
+              }`}>
+                <Timer className="w-3 h-3" />
+                {canExecute ? "Cycle ready" : `Next: ${formatCountdown(secondsUntilNext)}`}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <GenerateReportButton
@@ -112,6 +162,7 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
         ))}
       </div>
 
+      {/* Execute Cycle */}
       {active && (
         <button
           onClick={() => execute(payrollId)}
@@ -136,8 +187,8 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
         </a>
       )}
 
-      {/* Create Attestation — after successful cycle execution */}
-      {isSuccess && address && (
+      {/* EAS Attestation — persistent: shows for ANY payroll with completed cycles */}
+      {cycleCount > 0n && active && address && (
         <div className="mt-3">
           <button
             onClick={() => attest(payrollId, cycleCount, address as `0x${string}`, token as `0x${string}`, "USDT")}
