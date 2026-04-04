@@ -213,6 +213,7 @@ export default function DocsPage() {
             <div className="space-y-3 my-4">
               {[
                 { icon: Zap, title: "Execute Cycle", desc: "Triggers payment to all recipients. Only available when the cycle period has elapsed and there are sufficient funds." },
+                { icon: CheckCircle2, title: "Create EAS Attestations", desc: "After executing a cycle, create permanent on-chain proof-of-payment for each recipient via EAS. Attestations are non-revocable and verifiable by anyone." },
                 { icon: Shield, title: "Pay via HSP", desc: "Process payment through HashKey Settlement Protocol's hosted checkout. Shows a demo flow when API keys aren't configured." },
                 { icon: FileText, title: "Generate Report", desc: "Downloads a PDF compliance report with your company header, all payment details, and HSP receipt IDs. Requires setting up your business profile first." },
                 { icon: ExternalLink, title: "View on Explorer", desc: "After executing a cycle, click to see the transaction on the HashKey Chain block explorer." },
@@ -237,7 +238,7 @@ export default function DocsPage() {
               {[
                 { icon: Repeat, title: "Streaming Balance", desc: "A live counter showing your accumulated earnings ticking up in real time (preview feature — demonstrates per-second salary streaming)." },
                 { icon: Coins, title: "Fiat Conversion", desc: "All USDT amounts show their approximate value in USD and HKD. An exchange rate bar at the top shows current conversion rates." },
-                { icon: FileText, title: "Payment History", desc: "A table of all payments you've received: date, amount, cycle number, HSP receipt ID, and settlement status." },
+                { icon: FileText, title: "Payment History", desc: "Real on-chain payment data fetched from the blockchain. Shows date, amount (with USD value), cycle number, HSP receipt ID, and settlement status." },
                 { icon: FileText, title: "CSV Export", desc: "Download your complete payment history as a CSV file for accounting, tax filing, or personal records." },
                 { icon: Zap, title: "Gasless Claims", desc: "Preview of a feature that will let you claim payments without paying gas fees (coming soon)." },
                 { icon: Building2, title: "Withdraw to Bank", desc: "Preview of fiat off-ramp — shows estimated HKD conversion and bank withdrawal flow (coming soon)." },
@@ -383,6 +384,7 @@ export default function DocsPage() {
                 { title: "On-Chain Transparency", desc: "Every transaction is recorded on HashKey Chain. Anyone can verify payments, balances, and settlement receipts on the block explorer." },
                 { title: "Immutable Receipts", desc: "HSP receipts and EAS attestations cannot be altered, backdated, or deleted after creation." },
                 { title: "Owner-Only Actions", desc: "Only the wallet that created a payroll can execute cycles, add/remove recipients, fund, cancel, or withdraw. No admin backdoors." },
+                { title: "HSP Access Control", desc: "The HSP settlement layer restricts confirm/settle/cancel operations to authorized contracts only. Unauthorized callers are rejected." },
                 { title: "Open Source", desc: "All smart contracts and frontend code are open source and available on GitHub for independent review." },
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-3 glass rounded-xl p-4">
