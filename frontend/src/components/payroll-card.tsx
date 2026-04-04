@@ -2,8 +2,9 @@
 
 import { usePayrollDetails, useEscrowBalance, useRunway } from "@/hooks/usePayrolls";
 import { useExecuteCycle } from "@/hooks/useExecuteCycle";
+import { useAttestCycle } from "@/hooks/useAttestation";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
-import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield } from "lucide-react";
+import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2 } from "lucide-react";
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
 import { HSPPaymentButton } from "./hsp-payment-button";
@@ -19,7 +20,8 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   const { data: escrow } = useEscrowBalance(payrollId);
   const { data: runway } = useRunway(payrollId);
   const { execute, hash, isPending, isConfirming, isSuccess } = useExecuteCycle();
-  const { chain } = useAccount();
+  const { attest, hash: attestHash, isPending: attestPending, isConfirming: attestConfirming, isSuccess: attestSuccess } = useAttestCycle();
+  const { chain, address } = useAccount();
 
   if (isLoading || !details) {
     return (
@@ -132,6 +134,38 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
           <ExternalLink className="w-3 h-3" />
           View on Explorer
         </a>
+      )}
+
+      {/* Create Attestation — after successful cycle execution */}
+      {isSuccess && address && (
+        <div className="mt-3">
+          <button
+            onClick={() => attest(payrollId, cycleCount, address as `0x${string}`, token as `0x${string}`, "USDT")}
+            disabled={attestPending || attestConfirming || attestSuccess}
+            className="w-full px-4 py-2.5 glass rounded-xl font-medium hover:border-[#8B5CF6]/30 transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2 text-sm text-[#9BA3B7] hover:text-white"
+          >
+            {attestPending ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Confirm attestation...</>
+            ) : attestConfirming ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Creating attestations...</>
+            ) : attestSuccess ? (
+              <><CheckCircle2 className="w-4 h-4 text-[#10B981]" /> Attested on-chain</>
+            ) : (
+              <><Shield className="w-4 h-4 text-[#06B6D4]" /> Create EAS Attestations</>
+            )}
+          </button>
+          {attestSuccess && attestHash && (
+            <a
+              href={getExplorerTxUrl(attestHash, chain?.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center justify-center gap-1.5 text-xs text-[#06B6D4] hover:text-[#22D3EE] transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              View attestations on Explorer
+            </a>
+          )}
+        </div>
       )}
 
       {/* HSP Payment option */}

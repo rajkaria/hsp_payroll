@@ -15,6 +15,18 @@ export const metadata: Metadata = {
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%A1</text></svg>",
   },
+  openGraph: {
+    title: "HashPay — On-Chain Recurring Payroll",
+    description: "Automated payroll for DAOs and crypto teams. Pay your team on-chain with HSP settlement receipts, EAS attestations, and AI analytics.",
+    siteName: "HashPay",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HashPay — On-Chain Recurring Payroll",
+    description: "Automated payroll for DAOs and crypto teams on HashKey Chain.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

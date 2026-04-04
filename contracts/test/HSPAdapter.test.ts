@@ -69,6 +69,8 @@ describe("HSPAdapter", function () {
     const HSPAdapterFactory = await ethers.getContractFactory("HSPAdapter");
     adapter = (await HSPAdapterFactory.deploy()) as HSPAdapter;
     await adapter.waitForDeployment();
+    // Authorize owner as a caller (simulates PayrollFactory being authorized)
+    await adapter.authorizeCaller(owner.address);
   });
 
   // ─── createPaymentRequest ─────────────────────────────────────────────────

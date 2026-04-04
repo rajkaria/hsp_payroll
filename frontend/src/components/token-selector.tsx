@@ -112,12 +112,12 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
             {!showAddCustom ? (
               <>
                 <div className="p-1.5">
-                  {allTokens.map((token) => (
+                  {allTokens.filter((t) => t.available || t.isCustom).map((token) => (
                     <button
                       key={token.address + token.symbol}
                       onClick={() => handleSelect(token)}
                       className={`w-full px-3 py-2.5 rounded-lg flex items-center justify-between hover:bg-white/5 transition-colors ${
-                        selected.address === token.address ? "bg-[#1E5EFF]/10" : ""
+                        selected.address === token.address ? "bg-[#8B5CF6]/10" : ""
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
@@ -125,11 +125,6 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
                         <div className="text-left">
                           <div className="font-medium text-sm flex items-center gap-2">
                             {token.symbol}
-                            {!token.available && !token.isCustom && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/20">
-                                Soon
-                              </span>
-                            )}
                             {token.isCustom && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/20">
                                 Custom
@@ -144,6 +139,9 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
                       )}
                     </button>
                   ))}
+                </div>
+                <div className="px-4 py-2 text-[10px] text-[#5A6178]">
+                  USDC, HSK, WETH support coming soon
                 </div>
                 <div className="border-t border-[#1A2340]">
                   <button

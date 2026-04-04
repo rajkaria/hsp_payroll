@@ -20,8 +20,24 @@ contract HSPAdapter {
         uint256 settledAt;
     }
 
+    address public owner;
+    mapping(address => bool) public authorizedCallers;
     mapping(bytes32 => PaymentRequest) public requests;
     uint256 public requestCount;
+
+    modifier onlyAuthorized() {
+        require(authorizedCallers[msg.sender] || msg.sender == owner, "Not authorized");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function authorizeCaller(address caller) external {
+        require(msg.sender == owner, "Not owner");
+        authorizedCallers[caller] = true;
+    }
 
     event PaymentRequestCreated(
         bytes32 indexed requestId,
@@ -59,7 +75,7 @@ contract HSPAdapter {
         emit PaymentRequestCreated(requestId, payer, recipient, token, amount);
     }
 
-    function confirmPayment(bytes32 requestId) external {
+    function confirmPayment(bytes32 requestId) external onlyAuthorized {
         PaymentRequest storage req = requests[requestId];
         require(req.createdAt != 0, "Request does not exist");
         require(req.status == RequestStatus.Pending, "Not pending");
@@ -68,7 +84,7 @@ contract HSPAdapter {
         emit PaymentConfirmed(requestId);
     }
 
-    function markSettled(bytes32 requestId) external {
+    function markSettled(bytes32 requestId) external onlyAuthorized {
         PaymentRequest storage req = requests[requestId];
         require(req.createdAt != 0, "Request does not exist");
         require(
@@ -81,7 +97,7 @@ contract HSPAdapter {
         emit PaymentSettled(requestId, block.timestamp);
     }
 
-    function cancelPayment(bytes32 requestId) external {
+    function cancelPayment(bytes32 requestId) external onlyAuthorized {
         PaymentRequest storage req = requests[requestId];
         require(req.createdAt != 0, "Request does not exist");
         require(req.status == RequestStatus.Pending, "Can only cancel pending");

@@ -20,6 +20,11 @@ async function main() {
   await factory.waitForDeployment();
   console.log("PayrollFactory deployed to:", await factory.getAddress());
 
+  // Authorize PayrollFactory to call HSPAdapter
+  const authTx = await hsp.authorizeCaller(await factory.getAddress());
+  await authTx.wait();
+  console.log("PayrollFactory authorized as HSP caller");
+
   // Deploy MockERC20 (for testnet)
   const MockERC20 = await ethers.getContractFactory("MockERC20");
   const usdt = await MockERC20.deploy("Mock USDT", "USDT", 6);

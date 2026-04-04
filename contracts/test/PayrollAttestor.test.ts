@@ -24,6 +24,9 @@ describe("PayrollAttestor", function () {
     const factory = await PayrollFactory.deploy(await hsp.getAddress());
     await factory.waitForDeployment();
 
+    // Authorize PayrollFactory as HSP caller
+    await hsp.authorizeCaller(await factory.getAddress());
+
     // Deploy MockERC20
     const MockERC20 = await ethers.getContractFactory("MockERC20");
     const token = await MockERC20.deploy("Mock USDT", "USDT", 6);

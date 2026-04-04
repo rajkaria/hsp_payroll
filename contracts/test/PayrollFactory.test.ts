@@ -31,6 +31,9 @@ describe("PayrollFactory", function () {
     factory = (await PayrollFactoryFactory.deploy(await hspAdapter.getAddress())) as PayrollFactory;
     await factory.waitForDeployment();
 
+    // Authorize PayrollFactory as HSP caller
+    await hspAdapter.authorizeCaller(await factory.getAddress());
+
     // Deploy MockERC20 (6 decimals, like USDT)
     const MockERC20Factory = await ethers.getContractFactory("MockERC20");
     token = (await MockERC20Factory.deploy("Mock USDT", "mUSDT", 6)) as MockERC20;

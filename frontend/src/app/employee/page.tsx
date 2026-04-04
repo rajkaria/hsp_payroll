@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@/components/connect-button";
-import { PaymentHistory } from "@/components/payment-history";
-import { CSVExport } from "@/components/csv-export";
+import { EmployeePayments } from "@/components/employee-payments";
 import { useRecipientPayrolls } from "@/hooks/usePayrolls";
 import { motion } from "framer-motion";
 import { Wallet, FileText, ArrowLeft, Building2, Zap } from "lucide-react";
@@ -134,16 +133,7 @@ export default function EmployeeDashboard() {
             transition={{ delay: 0.2 }}
             className="space-y-6"
           >
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold font-[family-name:var(--font-space-grotesk)]">
-                Payment History
-              </h2>
-              <CSVExport receipts={[]} />
-            </div>
-
-            <div className="glass rounded-2xl overflow-hidden">
-              <PaymentHistory payments={[]} />
-            </div>
+            <EmployeePayments payrollIds={payrollIds.map((id) => BigInt(id.toString()))} address={address!} />
 
             <div className="text-xs text-[#525E75] text-center">
               All payments settled via HashKey Settlement Protocol on HashKey Chain

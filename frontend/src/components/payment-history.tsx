@@ -1,7 +1,8 @@
 "use client";
 
 import { formatAmount, formatDate } from "@/lib/utils";
-import { FileText } from "lucide-react";
+import { FileText, ExternalLink } from "lucide-react";
+import { FiatValueBadge } from "./fiat-value-badge";
 
 interface Payment {
   payrollId: bigint;
@@ -10,6 +11,7 @@ interface Payment {
   amount: bigint;
   timestamp: bigint;
   hspRequestId: string;
+  attestationUID?: string;
 }
 
 interface PaymentHistoryProps {
@@ -20,9 +22,9 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
   if (payments.length === 0) {
     return (
       <div className="text-center py-16">
-        <FileText className="w-8 h-8 text-[#525E75] mx-auto mb-3" />
-        <p className="text-[#8B95A9]">No payments yet</p>
-        <p className="text-xs text-[#525E75] mt-1">Payments will appear here after cycles are executed</p>
+        <FileText className="w-8 h-8 text-[#5A6178] mx-auto mb-3" />
+        <p className="text-[#9BA3B7]">No payments yet</p>
+        <p className="text-xs text-[#5A6178] mt-1">Payments will appear here after cycles are executed</p>
       </div>
     );
   }
@@ -31,7 +33,7 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[#1A2340] text-[#525E75]">
+          <tr className="border-b border-[#1C1E3A] text-[#5A6178]">
             <th className="text-left py-3.5 px-5 text-xs font-medium uppercase tracking-wider">Date</th>
             <th className="text-left py-3.5 px-5 text-xs font-medium uppercase tracking-wider">Amount</th>
             <th className="text-left py-3.5 px-5 text-xs font-medium uppercase tracking-wider">Cycle</th>
@@ -43,11 +45,14 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
           {payments.map((payment, i) => (
             <tr
               key={i}
-              className="border-b border-[#1A2340]/50 hover:bg-[#0F1629]/50 transition-colors"
+              className="border-b border-[#1C1E3A]/50 hover:bg-[#0E1025]/50 transition-colors"
             >
-              <td className="py-3.5 px-5 text-[#8B95A9]">{formatDate(Number(payment.timestamp))}</td>
-              <td className="py-3.5 px-5 font-semibold">{formatAmount(payment.amount)} USDT</td>
-              <td className="py-3.5 px-5 text-[#8B95A9]">#{payment.cycleNumber.toString()}</td>
+              <td className="py-3.5 px-5 text-[#9BA3B7]">{formatDate(Number(payment.timestamp))}</td>
+              <td className="py-3.5 px-5">
+                <span className="font-semibold">{formatAmount(payment.amount)} USDT</span>
+                <FiatValueBadge amount={payment.amount} className="ml-1.5" />
+              </td>
+              <td className="py-3.5 px-5 text-[#9BA3B7]">#{payment.cycleNumber.toString()}</td>
               <td className="py-3.5 px-5">
                 <span className="text-[#8B5CF6] text-xs font-mono bg-[#8B5CF6]/10 px-2 py-1 rounded-md">
                   {payment.hspRequestId.slice(0, 10)}...
