@@ -1,4 +1,4 @@
-import { CONTRACTS } from "./contracts";
+import { getContracts } from "./contracts";
 
 export interface TokenInfo {
   symbol: string;
@@ -11,44 +11,50 @@ export interface TokenInfo {
   isCustom?: boolean;
 }
 
-export const DEFAULT_TOKENS: TokenInfo[] = [
-  {
-    symbol: "USDT",
-    name: "Tether USD",
-    address: CONTRACTS.MOCK_USDT,
-    decimals: 6,
-    color: "#10B981",
-    icon: "₮",
-    available: true,
-  },
-  {
-    symbol: "USDC",
-    name: "USD Coin",
-    address: "0x0000000000000000000000000000000000000000",
-    decimals: 6,
-    color: "#2775CA",
-    icon: "$",
-    available: false,
-  },
-  {
-    symbol: "HSK",
-    name: "HashKey Token",
-    address: "0x0000000000000000000000000000000000000000",
-    decimals: 18,
-    color: "#1E5EFF",
-    icon: "H",
-    available: false,
-  },
-  {
-    symbol: "WETH",
-    name: "Wrapped ETH",
-    address: "0x0000000000000000000000000000000000000000",
-    decimals: 18,
-    color: "#627EEA",
-    icon: "Ξ",
-    available: false,
-  },
-];
+export function getDefaultTokens(chainId?: number): TokenInfo[] {
+  const contracts = getContracts(chainId);
+  return [
+    {
+      symbol: "USDT",
+      name: "Mock USDT (Testnet)",
+      address: contracts.MOCK_USDT,
+      decimals: 6,
+      color: "#10B981",
+      icon: "\u20AE",
+      available: true,
+    },
+    {
+      symbol: "USDC",
+      name: "USD Coin",
+      address: "0x0000000000000000000000000000000000000000",
+      decimals: 6,
+      color: "#2775CA",
+      icon: "$",
+      available: false,
+    },
+    {
+      symbol: "HSK",
+      name: "HashKey Token",
+      address: "0x0000000000000000000000000000000000000000",
+      decimals: 18,
+      color: "#1E5EFF",
+      icon: "H",
+      available: false,
+    },
+    {
+      symbol: "WETH",
+      name: "Wrapped ETH",
+      address: "0x0000000000000000000000000000000000000000",
+      decimals: 18,
+      color: "#627EEA",
+      icon: "\u039E",
+      available: false,
+    },
+  ];
+}
+
+// Backward compat — import getDefaultTokens(chainId) in new code
+export const DEFAULT_TOKENS: TokenInfo[] = getDefaultTokens();
 
 const CUSTOM_TOKENS_KEY = "hashpay_custom_tokens";
 
@@ -76,6 +82,6 @@ export function removeCustomToken(address: string): void {
   );
 }
 
-export function getAllTokens(): TokenInfo[] {
-  return [...DEFAULT_TOKENS, ...getCustomTokens()];
+export function getAllTokens(chainId?: number): TokenInfo[] {
+  return [...getDefaultTokens(chainId), ...getCustomTokens()];
 }

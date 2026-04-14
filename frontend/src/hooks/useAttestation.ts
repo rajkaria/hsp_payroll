@@ -1,10 +1,12 @@
 "use client";
 
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
-import { CONTRACTS, PAYROLL_ATTESTOR_ABI, EAS_ABI } from "@/config/contracts";
+import { PAYROLL_ATTESTOR_ABI, EAS_ABI } from "@/config/contracts";
+import { useContracts } from "./useContracts";
 import { decodeAbiParameters } from "viem";
 
 export function useAttestCycle() {
+  const contracts = useContracts();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -16,7 +18,7 @@ export function useAttestCycle() {
     tokenSymbol: string
   ) {
     writeContract({
-      address: CONTRACTS.PAYROLL_ATTESTOR as `0x${string}`,
+      address: contracts.PAYROLL_ATTESTOR as `0x${string}`,
       abi: PAYROLL_ATTESTOR_ABI,
       functionName: "attestCycle",
       args: [payrollId, cycleNumber, employer, token, tokenSymbol],
@@ -27,8 +29,9 @@ export function useAttestCycle() {
 }
 
 export function useAttestationData(uid: `0x${string}` | undefined) {
+  const contracts = useContracts();
   const { data, isLoading, error } = useReadContract({
-    address: CONTRACTS.EAS as `0x${string}`,
+    address: contracts.EAS as `0x${string}`,
     abi: EAS_ABI,
     functionName: "getAttestation",
     args: uid ? [uid] : undefined,

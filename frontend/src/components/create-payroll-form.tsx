@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useCreatePayroll } from "@/hooks/useCreatePayroll";
 import { useApproveToken, useFundPayroll } from "@/hooks/useFundPayroll";
-import { CONTRACTS } from "@/config/contracts";
+import { useContracts } from "@/hooks/useContracts";
 import { parseUnits } from "viem";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2, Wallet, Lock, BarChart3, Waves, Users, Code2, Briefcase, Palette } from "lucide-react";
 import { TokenSelector } from "./token-selector";
-import { DEFAULT_TOKENS, type TokenInfo } from "@/config/tokens";
+import { getDefaultTokens, type TokenInfo } from "@/config/tokens";
+import { useChainId } from "wagmi";
 import { toast } from "sonner";
 
 const FREQUENCIES = [
@@ -76,10 +77,13 @@ const stepVariants = {
 
 export function CreatePayrollForm() {
   const router = useRouter();
+  const contracts = useContracts();
+  const chainId = useChainId();
+  const defaultTokens = getDefaultTokens(chainId);
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState(2592000);
-  const [selectedToken, setSelectedToken] = useState<TokenInfo>(DEFAULT_TOKENS[0]);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo>(defaultTokens[0]);
   const [recipients, setRecipients] = useState<Recipient[]>([
     { address: "", amount: "" },
   ]);
@@ -109,11 +113,11 @@ export function CreatePayrollForm() {
   const handleCreate = () => {
     const addrs = recipients.map((r) => r.address as `0x${string}`);
     const amts = recipients.map((r) => parseUnits(r.amount, 6));
-    create(name, CONTRACTS.MOCK_USDT as `0x${string}`, addrs, amts, BigInt(frequency));
+    create(name, contracts.MOCK_USDT as `0x${string}`, addrs, amts, BigInt(frequency));
   };
 
   const handleApprove = () => {
-    approve(CONTRACTS.MOCK_USDT as `0x${string}`, parseUnits(fundAmount, 6));
+    approve(contracts.MOCK_USDT as `0x${string}`, parseUnits(fundAmount, 6));
   };
 
   const handleFund = () => {

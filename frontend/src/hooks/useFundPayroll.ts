@@ -1,15 +1,17 @@
 "use client";
 
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { CONTRACTS, PAYROLL_FACTORY_ABI, MOCK_ERC20_ABI } from "@/config/contracts";
+import { PAYROLL_FACTORY_ABI, MOCK_ERC20_ABI } from "@/config/contracts";
+import { useContracts } from "./useContracts";
 
 export function useFundPayroll() {
+  const contracts = useContracts();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   function fund(payrollId: bigint, amount: bigint) {
     writeContract({
-      address: CONTRACTS.PAYROLL_FACTORY as `0x${string}`,
+      address: contracts.PAYROLL_FACTORY as `0x${string}`,
       abi: PAYROLL_FACTORY_ABI,
       functionName: "fundPayroll",
       args: [payrollId, amount],
@@ -20,6 +22,7 @@ export function useFundPayroll() {
 }
 
 export function useApproveToken() {
+  const contracts = useContracts();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -28,7 +31,7 @@ export function useApproveToken() {
       address: token,
       abi: MOCK_ERC20_ABI,
       functionName: "approve",
-      args: [CONTRACTS.PAYROLL_FACTORY as `0x${string}`, amount],
+      args: [contracts.PAYROLL_FACTORY as `0x${string}`, amount],
     });
   }
 

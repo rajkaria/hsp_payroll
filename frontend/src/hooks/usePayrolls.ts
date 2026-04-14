@@ -1,21 +1,22 @@
 "use client";
 
 import { useReadContract } from "wagmi";
-import { CONTRACTS, PAYROLL_FACTORY_ABI } from "@/config/contracts";
-
-const factoryAddress = CONTRACTS.PAYROLL_FACTORY as `0x${string}`;
+import { PAYROLL_FACTORY_ABI } from "@/config/contracts";
+import { useContracts } from "./useContracts";
 
 export function usePayrollCount() {
+  const contracts = useContracts();
   return useReadContract({
-    address: factoryAddress,
+    address: contracts.PAYROLL_FACTORY as `0x${string}`,
     abi: PAYROLL_FACTORY_ABI,
     functionName: "payrollCount",
   });
 }
 
 export function usePayrollDetails(payrollId: bigint) {
+  const contracts = useContracts();
   return useReadContract({
-    address: factoryAddress,
+    address: contracts.PAYROLL_FACTORY as `0x${string}`,
     abi: PAYROLL_FACTORY_ABI,
     functionName: "getPayrollDetails",
     args: [payrollId],
@@ -23,8 +24,9 @@ export function usePayrollDetails(payrollId: bigint) {
 }
 
 export function useEscrowBalance(payrollId: bigint) {
+  const contracts = useContracts();
   return useReadContract({
-    address: factoryAddress,
+    address: contracts.PAYROLL_FACTORY as `0x${string}`,
     abi: PAYROLL_FACTORY_ABI,
     functionName: "escrowBalances",
     args: [payrollId],
@@ -32,8 +34,9 @@ export function useEscrowBalance(payrollId: bigint) {
 }
 
 export function useRunway(payrollId: bigint) {
+  const contracts = useContracts();
   return useReadContract({
-    address: factoryAddress,
+    address: contracts.PAYROLL_FACTORY as `0x${string}`,
     abi: PAYROLL_FACTORY_ABI,
     functionName: "getRunway",
     args: [payrollId],
@@ -41,8 +44,9 @@ export function useRunway(payrollId: bigint) {
 }
 
 export function useRecipientPayrolls(address: `0x${string}` | undefined) {
+  const contracts = useContracts();
   return useReadContract({
-    address: factoryAddress,
+    address: contracts.PAYROLL_FACTORY as `0x${string}`,
     abi: PAYROLL_FACTORY_ABI,
     functionName: "getRecipientPayrolls",
     args: address ? [address] : undefined,
@@ -51,8 +55,9 @@ export function useRecipientPayrolls(address: `0x${string}` | undefined) {
 }
 
 export function useReceipts(payrollId: bigint, cycleNumber: bigint) {
+  const contracts = useContracts();
   return useReadContract({
-    address: factoryAddress,
+    address: contracts.PAYROLL_FACTORY as `0x${string}`,
     abi: PAYROLL_FACTORY_ABI,
     functionName: "getReceipts",
     args: [payrollId, cycleNumber],

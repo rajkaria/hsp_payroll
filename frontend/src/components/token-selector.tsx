@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Plus, X, Check } from "lucide-react";
 import { TokenIcon } from "./token-icon";
-import { type TokenInfo, DEFAULT_TOKENS, getCustomTokens, saveCustomToken } from "@/config/tokens";
+import { type TokenInfo, getDefaultTokens, getCustomTokens, saveCustomToken } from "@/config/tokens";
+import { useChainId } from "wagmi";
 import { toast } from "sonner";
 
 interface TokenSelectorProps {
@@ -20,6 +21,8 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
   const [customSymbol, setCustomSymbol] = useState("");
   const [customName, setCustomName] = useState("");
   const [customDecimals, setCustomDecimals] = useState("18");
+  const chainId = useChainId();
+  const defaultTokens = getDefaultTokens(chainId);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,7 +40,7 @@ export function TokenSelector({ selected, onSelect }: TokenSelectorProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const allTokens = [...DEFAULT_TOKENS, ...customTokens];
+  const allTokens = [...defaultTokens, ...customTokens];
 
   const handleSelect = (token: TokenInfo) => {
     if (!token.available && !token.isCustom) {

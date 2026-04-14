@@ -4,8 +4,9 @@ import { useEffect, useRef } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits } from "viem";
 import { ConnectButton } from "@/components/connect-button";
-import { CONTRACTS, MOCK_ERC20_ABI } from "@/config/contracts";
-import { getExplorerTxUrl } from "@/config/wagmi";
+import { MOCK_ERC20_ABI } from "@/config/contracts";
+import { useContracts } from "@/hooks/useContracts";
+import { getExplorerTxUrl, CHAIN_META } from "@/config/wagmi";
 import { NetworkBadge } from "@/components/network-badge";
 import { motion } from "framer-motion";
 import { ArrowLeft, Droplets, Wallet, ExternalLink, Check, Loader2, Coins } from "lucide-react";
@@ -21,11 +22,12 @@ const MINT_AMOUNTS = [
 export default function FaucetPage() {
   const { address, isConnected, chain } = useAccount();
   const router = useRouter();
+  const contracts = useContracts();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const { data: balance, refetch: refetchBalance } = useReadContract({
-    address: CONTRACTS.MOCK_USDT as `0x${string}`,
+    address: contracts.MOCK_USDT as `0x${string}`,
     abi: MOCK_ERC20_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
@@ -47,12 +49,18 @@ export default function FaucetPage() {
   const handleMint = (amount: string) => {
     if (!address) return;
     writeContract({
-      address: CONTRACTS.MOCK_USDT as `0x${string}`,
+      address: contracts.MOCK_USDT as `0x${string}`,
       abi: MOCK_ERC20_ABI,
       functionName: "mint",
       args: [address, parseUnits(amount, 6)],
     });
   };
+
+  // Chain-specific gas faucet link
+  const gasFaucetUrl = chain?.id ? CHAIN_META[chain.id]?.faucetUrl : "";
+  const gasFaucetLabel = chain?.id === 133 ? "HashKey Chain Faucet" :
+    chain?.id === 84532 ? "Base Sepolia Faucet" :
+    chain?.id === 11155111 ? "Sepolia Faucet" : "Gas Faucet";
 
   if (!isConnected) {
     return (
@@ -165,7 +173,9 @@ export default function FaucetPage() {
           {/* Info */}
           <div className="text-center text-xs text-[#5A6178] space-y-1">
             <p>Mock USDT is a testnet token with no real value.</p>
-            <p>Need HSK for gas? Visit the <a href="https://www.hashkeychain.net/faucet" target="_blank" rel="noopener noreferrer" className="text-[#8B5CF6] hover:text-[#C084FC]">HashKey Chain Faucet</a></p>
+            {gasFaucetUrl && (
+              <p>Need gas tokens? Visit the <a href={gasFaucetUrl} target="_blank" rel="noopener noreferrer" className="text-[#8B5CF6] hover:text-[#C084FC]">{gasFaucetLabel}</a></p>
+            )}
           </div>
         </motion.div>
       </div>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { CONTRACTS, PAYROLL_FACTORY_ABI } from "@/config/contracts";
+import { PAYROLL_FACTORY_ABI } from "@/config/contracts";
+import { useContracts } from "./useContracts";
 
 export function useCreatePayroll() {
+  const contracts = useContracts();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -15,7 +17,7 @@ export function useCreatePayroll() {
     frequency: bigint
   ) {
     writeContract({
-      address: CONTRACTS.PAYROLL_FACTORY as `0x${string}`,
+      address: contracts.PAYROLL_FACTORY as `0x${string}`,
       abi: PAYROLL_FACTORY_ABI,
       functionName: "createPayroll",
       args: [name, token, recipients, amounts, frequency],

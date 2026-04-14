@@ -130,7 +130,7 @@ export default function Home() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm text-[#9BA3B7] mb-10"
           >
             <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-            Live on HashKey Chain Testnet
+            Live on Sepolia &amp; HashKey Chain
           </motion.div>
 
           {/* Heading */}
