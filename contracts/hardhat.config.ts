@@ -8,11 +8,11 @@ const config: HardhatUserConfig = {
     compilers: [
       {
         version: "0.8.24",
-        settings: { optimizer: { enabled: true, runs: 200 } },
+        settings: { optimizer: { enabled: true, runs: 200 }, viaIR: true },
       },
       {
         version: "0.8.27",
-        settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "cancun" },
+        settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "cancun", viaIR: true },
       },
     ],
   },

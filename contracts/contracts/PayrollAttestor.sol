@@ -19,6 +19,17 @@ interface IPayrollFactory {
     function getReceipts(uint256 payrollId, uint256 cycleNumber) external view returns (Receipt[] memory);
 }
 
+interface IReputationRegistry {
+    function recordAttestation(
+        address employer,
+        address recipient,
+        uint256 amount,
+        uint256 expectedInterval,
+        uint256 actualElapsed,
+        bytes32 uid
+    ) external;
+}
+
 contract PayrollAttestor {
     IEAS public immutable eas;
     ISchemaRegistry public immutable schemaRegistry;
@@ -26,6 +37,8 @@ contract PayrollAttestor {
 
     bytes32 public schemaUID;
     address public owner;
+    IReputationRegistry public reputation;
+    mapping(address => mapping(address => uint256)) public lastAttestationTs;
 
     string public constant SCHEMA = "bytes32 payrollId, uint256 cycleNumber, address employer, address recipient, uint256 amount, address token, bytes32 hspRequestId, string tokenSymbol";
 
@@ -42,6 +55,31 @@ contract PayrollAttestor {
         schemaRegistry = ISchemaRegistry(_schemaRegistry);
         factory = IPayrollFactory(_factory);
         owner = msg.sender;
+    }
+
+    function setReputationRegistry(address _r) external onlyOwner {
+        reputation = IReputationRegistry(_r);
+    }
+
+    /// @notice Set schemaUID directly when the schema is already registered on chain.
+    function setSchemaUID(bytes32 uid) external onlyOwner {
+        require(schemaUID == bytes32(0), "Already set");
+        schemaUID = uid;
+        emit SchemaRegistered(uid);
+    }
+
+    function _pushReputation(
+        address employer,
+        address recipient,
+        uint256 amount,
+        uint256 expectedInterval,
+        bytes32 uid
+    ) internal {
+        if (address(reputation) == address(0)) return;
+        uint256 last = lastAttestationTs[recipient][employer];
+        uint256 elapsed = last == 0 ? 0 : block.timestamp - last;
+        lastAttestationTs[recipient][employer] = block.timestamp;
+        reputation.recordAttestation(employer, recipient, amount, expectedInterval, elapsed, uid);
     }
 
     /// @notice Register the payroll attestation schema. Call once after deploy.
@@ -99,6 +137,8 @@ contract PayrollAttestor {
                 })
             );
 
+            _pushReputation(employer, receipts[i].recipient, receipts[i].amount, 0, uids[i]);
+
             emit PayrollAttested(
                 uids[i],
                 payrollId,
@@ -149,6 +189,7 @@ contract PayrollAttestor {
             })
         );
 
+        _pushReputation(employer, recipient, amount, 0, uid);
         emit PayrollAttested(uid, payrollId, cycleNumber, recipient, amount);
         return uid;
     }

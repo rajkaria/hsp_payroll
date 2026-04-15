@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./HSPAdapter.sol";
+import "./protocol/IPayrollExtension.sol";
 
 contract PayrollFactory is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -40,6 +41,16 @@ contract PayrollFactory is ReentrancyGuard {
     mapping(address => uint256[]) public recipientPayrolls;
     mapping(uint256 => uint256) public escrowBalances;
 
+    // --- Protocol extensions (appended; storage-layout-safe) ---
+    address public governance;
+    IPayrollExtension public extension;       // optional: routes per-recipient payouts
+    IPayrollExtension public yieldExtension;  // optional: wraps fund/execute with vault
+    IPayrollExtension public advanceExtension;// optional: repay hook for advances
+    address public complianceRegistry;        // optional: compliance hook evaluator
+
+    event ExtensionSet(bytes32 indexed kind, address indexed extension);
+    event RecipientSkipped(uint256 indexed payrollId, address indexed recipient, string reason);
+
     event PayrollCreated(uint256 indexed payrollId, address indexed owner, address token, string name);
     event PayrollFunded(uint256 indexed payrollId, uint256 amount, uint256 newBalance);
     event CycleExecuted(uint256 indexed payrollId, uint256 cycleNumber, uint256 totalPaid);
@@ -51,6 +62,37 @@ contract PayrollFactory is ReentrancyGuard {
 
     constructor(address _hspAdapter) {
         hspAdapter = HSPAdapter(_hspAdapter);
+        governance = msg.sender;
+    }
+
+    modifier onlyGovernance() {
+        require(msg.sender == governance, "Not governance");
+        _;
+    }
+
+    function setGovernance(address g) external onlyGovernance {
+        require(g != address(0), "Zero address");
+        governance = g;
+    }
+
+    function setExtension(address ext) external onlyGovernance {
+        extension = IPayrollExtension(ext);
+        emit ExtensionSet("cadence", ext);
+    }
+
+    function setYieldExtension(address ext) external onlyGovernance {
+        yieldExtension = IPayrollExtension(ext);
+        emit ExtensionSet("yield", ext);
+    }
+
+    function setAdvanceExtension(address ext) external onlyGovernance {
+        advanceExtension = IPayrollExtension(ext);
+        emit ExtensionSet("advance", ext);
+    }
+
+    function setComplianceRegistry(address r) external onlyGovernance {
+        complianceRegistry = r;
+        emit ExtensionSet("compliance", r);
     }
 
     modifier onlyPayrollOwner(uint256 payrollId) {
@@ -103,6 +145,12 @@ contract PayrollFactory is ReentrancyGuard {
         escrowBalances[payrollId] += amount;
         p.totalDeposited += amount;
 
+        // Yield extension: forward funds to vault if configured
+        if (address(yieldExtension) != address(0)) {
+            IERC20(p.token).safeTransfer(address(yieldExtension), amount);
+            yieldExtension.onFund(payrollId, p.token, amount);
+        }
+
         emit PayrollFunded(payrollId, amount, escrowBalances[payrollId]);
     }
 
@@ -117,6 +165,12 @@ contract PayrollFactory is ReentrancyGuard {
         }
 
         uint256 cycleCost = _getCycleCost(payrollId);
+
+        // If yield extension holds funds, ask it to return cycleCost's worth to this contract
+        if (address(yieldExtension) != address(0)) {
+            yieldExtension.beforeCycle(payrollId, p.token, cycleCost);
+        }
+
         require(escrowBalances[payrollId] >= cycleCost, "Insufficient escrow balance");
 
         p.cycleCount++;
@@ -126,28 +180,69 @@ contract PayrollFactory is ReentrancyGuard {
             msg.sender, p.recipients, p.token, p.amounts
         );
 
+        uint256 actualSpent;
         for (uint256 i = 0; i < p.recipients.length; i++) {
-            IERC20(p.token).safeTransfer(p.recipients[i], p.amounts[i]);
+            uint256 amt = p.amounts[i];
+            address recipient = p.recipients[i];
+
+            // 1) Compliance gating (skip recipient on failure, keep others flowing)
+            if (complianceRegistry != address(0)) {
+                (bool ok, string memory reason) = IComplianceRegistry(complianceRegistry)
+                    .runHooks(payrollId, recipient, amt);
+                if (!ok) {
+                    hspAdapter.cancelPayment(requestIds[i]);
+                    emit RecipientSkipped(payrollId, recipient, reason);
+                    continue;
+                }
+            }
+
+            // 2) Advance repay hook nets debt out of gross amount
+            uint256 netAmount = amt;
+            if (address(advanceExtension) != address(0)) {
+                netAmount = advanceExtension.onRepay(payrollId, recipient, amt, p.token);
+                uint256 debtPortion = amt - netAmount;
+                if (debtPortion > 0) {
+                    IERC20(p.token).safeTransfer(address(advanceExtension), debtPortion);
+                }
+            }
+
+            // 3) Cadence extension decides payout routing
+            address payoutTarget = recipient;
+            uint256 payoutAmount = netAmount;
+            if (address(extension) != address(0)) {
+                (payoutTarget, payoutAmount) = extension.onSettleRecipient(
+                    payrollId, recipient, netAmount, p.token, requestIds[i]
+                );
+            }
+
+            if (payoutAmount > 0 && payoutTarget != address(0)) {
+                IERC20(p.token).safeTransfer(payoutTarget, payoutAmount);
+            }
             hspAdapter.confirmPayment(requestIds[i]);
             hspAdapter.markSettled(requestIds[i]);
 
             cycleReceipts[payrollId][cycleNumber].push(Receipt({
                 payrollId: payrollId,
                 cycleNumber: cycleNumber,
-                recipient: p.recipients[i],
-                amount: p.amounts[i],
+                recipient: recipient,
+                amount: amt,
                 timestamp: block.timestamp,
                 hspRequestId: requestIds[i]
             }));
 
-            emit PaymentSettled(payrollId, p.recipients[i], p.amounts[i], requestIds[i]);
+            emit PaymentSettled(payrollId, recipient, amt, requestIds[i]);
+            actualSpent += amt; // gross amount from escrow is fully consumed; advance/cadence reroute within amt
         }
 
-        escrowBalances[payrollId] -= cycleCost;
-        p.totalPaid += cycleCost;
+        escrowBalances[payrollId] -= actualSpent;
+        p.totalPaid += actualSpent;
         p.lastExecuted = block.timestamp;
 
-        emit CycleExecuted(payrollId, cycleNumber, cycleCost);
+        if (address(extension) != address(0)) {
+            extension.afterCycle(payrollId);
+        }
+
+        emit CycleExecuted(payrollId, cycleNumber, actualSpent);
     }
 
     function cancelPayroll(uint256 payrollId) external onlyPayrollOwner(payrollId) nonReentrant {

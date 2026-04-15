@@ -1,187 +1,153 @@
-# HashPay
+# HashPay — The Income Protocol
 
-On-chain recurring payroll platform for DAOs, crypto-native teams, and freelancers — powered by HashKey Settlement Protocol on HashKey Chain.
+> Six composable primitives that transform payroll into a permissionless foundation for DeFi.
 
-**Live:** [hashpay.tech](https://hashpay.tech) | **Docs:** [hashpay.tech/docs](https://hashpay.tech/docs) | **Faucet:** [hashpay.tech/faucet](https://hashpay.tech/faucet) | **Verify:** [hashpay.tech/verify](https://hashpay.tech/verify)
+[![Tests](https://img.shields.io/badge/tests-170%20passing-brightgreen)]()
+[![Chains](https://img.shields.io/badge/chains-Sepolia%20%7C%20HashKey%20Testnet-blue)]()
+
+**Live:** https://hashpay.tech
+
+---
+
+## What this is
+
+Most payroll projects ship a product. HashPay ships a **protocol** — a stack of standalone on-chain contracts that compose into payroll today, and whatever's next tomorrow.
+
+| Primitive | Tagline | Contract |
+|-----------|---------|----------|
+| **Cadence** | How money flows | `AdaptiveCadence.sol` |
+| **Yield** | What idle money does | `YieldEscrow.sol` + `MockYieldVault.sol` |
+| **Reputation** | What receipts compose into | `ReputationRegistry.sol` |
+| **Advances** | Receipt-backed credit | `PayrollAdvance.sol` |
+| **Compliance** | Pluggable gating | `ComplianceHookRegistry.sol` + hooks |
+| **Salary Index** | Fiat-denominated pay | `SalaryIndex.sol` |
+
+Plus: **HSPAdapter** (HashKey Settlement Protocol), **PayrollAttestor** (EAS receipts).
+
+Every read on every primitive is public. Any DeFi/PayFi protocol can compose on top without asking.
+
+---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  Frontend (Next.js 16 + wagmi v2 + RainbowKit)              │
-│  ├── Employer: create, fund, execute, attest, analyze        │
-│  ├── Employee: real payment history, streaming, CSV export   │
-│  ├── API Routes: /api/ai/analyze, /api/hsp/create-order     │
-│  └── Pages: faucet, verify, docs, analytics, profile         │
-├──────────────────────────────────────────────────────────────┤
-│  Smart Contracts (Solidity 0.8.24)                           │
-│  ├── PayrollFactory  — payroll CRUD, escrow, cycle execution │
-│  ├── HSPAdapter      — settlement lifecycle + access control │
-│  ├── PayrollAttestor — EAS on-chain attestations             │
-│  └── MockERC20       — testnet token (6 decimals)            │
-├──────────────────────────────────────────────────────────────┤
-│  HashKey Chain (OP Stack L2)                                 │
-│  ├── EAS predeploy   — 0x4200...0021 (attestations)          │
-│  ├── SchemaRegistry  — 0x4200...0020 (schemas)               │
-│  └── ~2s blocks, ~$0.01 gas, EVM compatible                  │
-└──────────────────────────────────────────────────────────────┘
+                       ┌─────────────────────┐
+ ┌─────────────────────┤   PayrollFactory    ├─────────────────────┐
+ │                     └─────────────────────┘                     │
+ │ setExtension() / setYieldExtension() / setAdvanceExtension() ...│
+ ▼                                                                 ▼
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│   Cadence   │   │    Yield    │   │  Advance    │   │ Compliance  │
+│  BATCH      │   │  ERC-4626   │   │  LTV tiers  │   │  KYC / Jur. │
+│  STREAM     │   │  vault      │   │  APR tiers  │   │  Sanctions  │
+│  PULL       │   │  auto-      │   │  lender     │   │  RateLimit  │
+│  HYBRID     │   │  compound   │   │  pool       │   │  Timelock   │
+└─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
+                                           │
+                  ┌─────────────┐   ┌─────────────┐
+                  │  Attestor   │──▶│ Reputation  │◀── Chainlink-compatible
+                  │  (EAS)      │   │  Registry   │    oracle interface
+                  └─────────────┘   └─────────────┘
 ```
 
-### Smart Contracts
-- **PayrollFactory.sol** — Create/manage payrolls, fund escrow, execute payment cycles, manage recipients
-- **HSPAdapter.sol** — Payment request lifecycle with `onlyAuthorized` access control (create → confirm → settle)
-- **PayrollAttestor.sol** — EAS attestation creation for permanent on-chain proof-of-payment
-- **MockERC20.sol** — Test USDT token with public mint (6 decimals)
+---
 
-### Frontend
-- Next.js 16 + TypeScript + Tailwind CSS v4 + Framer Motion
-- wagmi v2 + RainbowKit for wallet connection
-- Recharts for analytics, jsPDF for compliance reports, Anthropic SDK for AI
-- Animated canvas mesh background with cursor interaction
+## Bonus features (beyond spec)
 
-## Features
+1. **HYBRID cadence** — split payouts (e.g. 50% stream + 50% batch) per recipient.
+2. **Yield-funded cycles** — when accrued yield ≥ cycle cost, payroll pays itself.
+3. **IncomeOracle adapter** — `ReputationRegistry` exposes Chainlink AggregatorV3 shape (`latestRoundData`, `latestAnswer`) so lending protocols can read income as a price feed natively.
+6. **Reputation-priced APR** — interest rate scales by income tier (1% / 1.5% / 2% per cycle).
+7. **TimelockHook + RateLimitHook** — two extra institutional-grade compliance primitives.
 
-### Core
-- **Escrow-Based Payroll** — Funds held in smart contract escrow with transparent runway tracking
-- **HSP Settlement Receipts** — Every payment generates an immutable on-chain receipt via HSP
-- **HSP REST API Integration** — Real HSP hosted checkout with HMAC-SHA256 auth (demo mode available)
-- **EAS Attestations** — Permanent on-chain proof-of-payment via Ethereum Attestation Service
-- **Payment Verification** — Public `/verify` page for independent attestation verification
-- **Multi-Recipient** — Pay unlimited team members in a single cycle execution
-- **Custom Token Support** — USDT default, add any custom ERC-20 token on HashKey Chain
-- **Multi-Chain** — HashKey Chain testnet (133) and mainnet (177) support
-- **Payroll Templates** — Pre-built templates (Engineering, Contractor, Design, Quick Test)
-- **Access Control** — HSPAdapter restricted to authorized callers only
+---
 
-### Analytics & Compliance
-- **AI Cash Flow Intelligence** — Health score, runway prediction, anomaly detection, optimization tips (Claude API or demo mode)
-- **Analytics Dashboard** — Payment volume, escrow runway burn rate, cost-per-employee charts
-- **PDF Compliance Reports** — Downloadable reports with company header, payment tables, HSP receipt IDs
-- **Business Profile** — Company details stored for report generation
-- **CSV Export** — Full payment history export for accounting
+## Tests
 
-### Employee Experience
-- **Real Payment History** — On-chain receipts fetched and displayed per payroll/cycle
-- **Fiat Conversion** — USD/HKD value badges on all amounts
-- **CSV Export** — Full payment history export for accounting and tax filing
+```
+$ npx hardhat test
+  170 passing
+```
 
-### Developer Experience
-- **Token Faucet** — One-click Mock USDT minting with auto-refreshing balance
-- **Explorer Links** — All transactions linked to HashKey Chain block explorer
-- **Interactive Docs** — User-facing documentation with Quick Start, FAQ, and guides
-- **115 Unit Tests** — Comprehensive coverage across all 4 contracts
+| Suite | Tests |
+|-------|-------|
+| PayrollFactory | 68 |
+| HSPAdapter | 14 |
+| PayrollAttestor | 15 |
+| AdaptiveCadence | 15 |
+| YieldEscrow + MockYieldVault | 9 |
+| ReputationRegistry | 11 |
+| PayrollAdvance | 9 |
+| Compliance Hooks | 9 |
+| SalaryIndex | 2 |
 
-## Pages
+---
 
-| Route | Description |
-|---|---|
-| `/` | Landing page with animated mesh, features, interactive stepper |
-| `/employer` | Employer dashboard — manage payrolls, execute cycles, create attestations |
-| `/employer/create` | Multi-step payroll creation wizard with templates |
-| `/employer/analytics` | Payment volume, burn rate, cost charts, AI intelligence panel |
-| `/employer/profile` | Business profile for compliance reports |
-| `/employee` | Employee dashboard — real on-chain payment history, fiat conversion |
-| `/faucet` | Token faucet — mint testnet USDT with auto-balance refresh |
-| `/verify` | Public payment verification via EAS attestation lookup |
-| `/docs` | User-facing documentation with Quick Start, guides, FAQ |
+## Deploy
 
-## Setup
-
-### Prerequisites
-- Node.js 18+
-- MetaMask or compatible Web3 wallet
-
-### Smart Contracts
 ```bash
-cd contracts
-cp .env.example .env
-# Add your PRIVATE_KEY to .env
-npm install
+# contracts
+cd contracts && npm i
 npx hardhat compile
-npx hardhat test          # 115 tests
-npx hardhat run scripts/deploy.ts --network hashkeyTestnet
+npx hardhat test
+
+# full protocol to Sepolia
+SEPOLIA_RPC_URL=... PRIVATE_KEY=... \
+  npx hardhat run scripts/deploy-protocol.ts --network sepolia
+
+# frontend
+cd frontend && npm i && npm run build
 ```
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev               # http://localhost:3000
-npm run build             # Production build
+Paste the deploy output JSON into `frontend/src/config/protocol-contracts.ts` under the matching `chainId`.
+
+---
+
+## Key pages
+
+- `/` — landing (Income Protocol narrative)
+- `/protocol` — primitive showcase
+- `/docs/{cadence, yield, reputation, advances, hooks, salary-index}` — deep dives
+- `/reputation/[address]` — public income identity (shareable)
+- `/lender` — lend liquidity, earn from advances
+- `/employer` — create/fund payrolls, attach hooks, enable yield
+- `/employee` — dashboard, cadence selector, advance request
+- `/faucet` — test tokens
+
+---
+
+## Contract addresses (Sepolia — base layer)
+
+- HSPAdapter: `0xd9d2DCe611547CB5E7D1abF50Bd8C0eF65F8E2de`
+- PayrollFactory: `0x87e05D6F1C704f5010Cd6039e1a8D2C341458860`
+- MockUSDT: `0x7D7c21E25576F7F7C224A9Ccf55B2E90648f8652`
+- PayrollAttestor: `0xb54650cd175E13872cd366eeD9b8e7E94592db21`
+- EAS: `0xc2679fBd37d54388cE493f1db75e8dAD8e0b84D5`
+- EAS Schema UID: `0x4d0972424d71fca626f8a29bfa961af74be2be30f248401e80046998fe80ccd4`
+
+Protocol primitives: deploy with `scripts/deploy-protocol.ts` and paste output into `frontend/src/config/protocol-contracts.ts`.
+
+---
+
+## Extending
+
+**Custom compliance hook**
+
+```solidity
+contract MyHook is IComplianceHook {
+    function check(address e, address r, uint256 amt, uint256 pid)
+        external view returns (bool, string memory) { return (true, ""); }
+    function description() external pure returns (string memory) { return "my hook"; }
+    function hookId() external pure returns (bytes32) { return keccak256("my-hook-v1"); }
+}
 ```
 
-### Deploy to Vercel
-```bash
-cd frontend
-npx vercel --prod         # Root directory: frontend/
-```
+Deploy, then `ComplianceHookRegistry.attachHook(payrollId, hookAddr)`.
 
-### Environment Variables (Optional)
-```env
-# frontend/.env.local
-ANTHROPIC_API_KEY=sk-ant-...      # Enables live AI analysis (demo mode without)
-HSP_API_KEY=...                    # Enables real HSP checkout (demo mode without)
-HSP_API_SECRET=...
-HSP_MERCHANT_ID=...
-```
+**Custom yield vault** — any ERC-4626 contract; pass to `YieldEscrow.enableYield(payrollId, vault, autoCompound)`.
 
-## Contract Addresses (HashKey Testnet)
-
-| Contract | Address |
-|---|---|
-| PayrollFactory | `0x3120bf2Ec2de2c6a9B75D14F2393EBa6518217cb` |
-| HSPAdapter | `0xa31558b2c364B269Ac823798AefcA7E285Af3487` |
-| Mock USDT | `0xcd367c583fd028C12Cc038d744cE7B2a67d848E2` |
-| PayrollAttestor | `0x5F6b5EB4f444d6aCc4F7829660a7C920399253Cf` |
-| EAS (predeploy) | `0x4200000000000000000000000000000000000021` |
-| EAS Schema UID | `0x4d0972424d71fca626f8a29bfa961af74be2be30` |
-
-## HashKey Chain
-
-| | Testnet | Mainnet |
-|---|---|---|
-| Chain ID | 133 | 177 |
-| RPC | https://testnet.hsk.xyz | https://mainnet.hsk.xyz |
-| Explorer | https://testnet-explorer.hsk.xyz | https://explorer.hsk.xyz |
-| Faucet | https://www.hashkeychain.net/faucet | — |
-
-## HSP Integration
-
-HashPay integrates with HSP at two levels:
-
-**On-Chain (HSPAdapter):**
-1. PayrollFactory creates batch payment requests via HSPAdapter
-2. Requests confirmed and settled during cycle execution
-3. Immutable receipts stored with HSP request IDs
-4. Access control: only authorized contracts can confirm/settle
-
-**Off-Chain (HSP REST API):**
-1. "Pay via HSP" button creates HSP payment order
-2. HMAC-SHA256 signed requests to HSP API
-3. Redirect to HSP hosted checkout (or demo modal)
-4. Webhook handler for payment confirmation
-
-## EAS Attestations
-
-Every payment can be permanently attested on-chain via EAS:
-- PayrollAttestor reads receipts from PayrollFactory
-- Creates non-revocable attestations per recipient per cycle
-- Schema: payrollId, cycleNumber, employer, recipient, amount, token, hspRequestId, tokenSymbol
-- Anyone can verify at `/verify` — no wallet required
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Smart Contracts | Solidity 0.8.24, Hardhat, OpenZeppelin, EAS |
-| Frontend | Next.js 16, React 19, TypeScript |
-| Styling | Tailwind CSS v4, Framer Motion, Canvas animations |
-| Web3 | wagmi v2, viem, RainbowKit |
-| Charts | Recharts |
-| AI | Anthropic Claude API (with demo fallback) |
-| PDF | jsPDF + jspdf-autotable |
-| Deployment | Vercel, HashKey Chain |
+---
 
 ## License
 
-MIT
+MIT.

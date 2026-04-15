@@ -111,6 +111,9 @@ export default function Home() {
             <a href="/faucet" className="hidden sm:block text-sm text-[#9BA3B7] hover:text-white transition-colors">
               Faucet
             </a>
+            <a href="/protocol" className="hidden md:block text-sm text-[#9BA3B7] hover:text-white transition-colors">
+              Protocol
+            </a>
             <a href="/docs" className="hidden md:block text-sm text-[#9BA3B7] hover:text-white transition-colors">
               Docs
             </a>
@@ -140,9 +143,9 @@ export default function Home() {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="font-[family-name:var(--font-space-grotesk)] text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] mb-7 tracking-tight"
           >
-            On-Chain Payroll
+            The Income
             <br />
-            <span className="gradient-text">Made Simple</span>
+            <span className="gradient-text">Protocol</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -152,8 +155,8 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg sm:text-xl text-[#9BA3B7] max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Recurring payment rails for DAOs, crypto-native teams, and freelancers.
-            Powered by HashKey Settlement Protocol with full audit trails.
+            Six composable primitives — <strong className="text-white">Cadence, Yield, Reputation, Advances, Compliance, Salary-Index</strong> — that transform payroll
+            into a permissionless foundation for DeFi. Built for HashKey Chain.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -279,6 +282,61 @@ export default function Home() {
               </motion.div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════ PROTOCOL PRIMITIVES ═══════════════ */}
+      <section id="protocol" className="relative px-6 py-32 z-10">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-card text-xs font-medium text-[#C084FC] tracking-widest uppercase mb-4">
+              <Sparkles className="w-3 h-3" /> Six Primitives
+            </div>
+            <h2 className="font-[family-name:var(--font-space-grotesk)] text-4xl sm:text-5xl font-bold mb-4 tracking-tight">
+              Not a product. <span className="gradient-text">A protocol.</span>
+            </h2>
+            <p className="text-[#9BA3B7] max-w-2xl mx-auto">
+              Every primitive is a standalone on-chain contract. Compose them into payroll — or into anything else.
+            </p>
+          </motion.div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { name: "Cadence", tag: "How money flows", desc: "Batch, stream, pull, or hybrid — recipient's choice.", href: "/docs/cadence" },
+              { name: "Yield", tag: "What idle money does", desc: "ERC-4626 auto-deposit. Runway extends itself.", href: "/docs/yield" },
+              { name: "Reputation", tag: "Receipts compose", desc: "Permissionless on-chain proof-of-income.", href: "/docs/reputation" },
+              { name: "Advances", tag: "Receipt-backed credit", desc: "Borrow up to 70% of next payout, reputation-tiered APR.", href: "/docs/advances" },
+              { name: "Compliance", tag: "Pluggable gating", desc: "KYC, jurisdiction, sanctions, timelock, rate limits.", href: "/docs/hooks" },
+              { name: "Salary Index", tag: "Fiat-denominated pay", desc: "Quote salary in ₹, $, €. Oracle resolves at execute time.", href: "/docs/salary-index" },
+            ].map((p, i) => (
+              <motion.a
+                key={p.name}
+                href={p.href}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05, duration: 0.5 }}
+                className="glass-card p-6 rounded-2xl block hover:border-[#8B5CF6]/50 transition-all group"
+              >
+                <div className="text-xs font-medium text-[#C084FC] uppercase tracking-widest mb-2">{p.tag}</div>
+                <div className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold mb-2">{p.name}</div>
+                <div className="text-sm text-[#9BA3B7] mb-4">{p.desc}</div>
+                <div className="text-xs text-[#8B5CF6] group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                  Read docs <ArrowRight className="w-3 h-3" />
+                </div>
+              </motion.a>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <a href="/protocol" className="inline-flex items-center gap-2 px-6 py-3 rounded-full glass-card text-sm font-medium hover:border-[#8B5CF6]/50 transition-all">
+              Explore the full protocol <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
         </div>
       </section>
 

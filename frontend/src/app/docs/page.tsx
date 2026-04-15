@@ -11,6 +11,7 @@ import {
 
 const NAV_SECTIONS = [
   { id: "overview", label: "What is HashPay?", icon: BookOpen },
+  { id: "protocol", label: "The Income Protocol", icon: GitBranch },
   { id: "quickstart", label: "Quick Start", icon: PlayCircle },
   { id: "employer", label: "For Employers", icon: Building2 },
   { id: "employee", label: "For Employees", icon: Users },
@@ -20,6 +21,15 @@ const NAV_SECTIONS = [
   { id: "tokens", label: "Tokens & Faucet", icon: Coins },
   { id: "security", label: "Security", icon: Lock },
   { id: "faq", label: "FAQ", icon: HelpCircle },
+];
+
+const PROTOCOL_LINKS = [
+  { href: "/docs/cadence", name: "Cadence", desc: "How money flows" },
+  { href: "/docs/yield", name: "Yield", desc: "What idle money does" },
+  { href: "/docs/reputation", name: "Reputation", desc: "What receipts compose into" },
+  { href: "/docs/advances", name: "Advances", desc: "Receipt-backed credit" },
+  { href: "/docs/hooks", name: "Compliance Hooks", desc: "Pluggable gating" },
+  { href: "/docs/salary-index", name: "Salary Index", desc: "Fiat-denominated pay" },
 ];
 
 function Section({ id, title, icon: Icon, children }: { id: string; title: string; icon: React.ElementType; children: React.ReactNode }) {
@@ -150,6 +160,24 @@ export default function DocsPage() {
               <li><strong className="text-white">Crypto-native teams</strong> — Pay your team in stablecoins with recurring schedules</li>
               <li><strong className="text-white">Freelancers & contractors</strong> — Get paid on time with verifiable settlement receipts</li>
             </ul>
+          </Section>
+
+          {/* ════════════ THE INCOME PROTOCOL ════════════ */}
+          <Section id="protocol" title="The Income Protocol" icon={GitBranch}>
+            <p>
+              HashPay is not a product. It's a protocol composed of six primitives, each a standalone on-chain contract you can build on top of:
+            </p>
+            <div className="grid md:grid-cols-2 gap-3 my-4">
+              {PROTOCOL_LINKS.map((p) => (
+                <a key={p.href} href={p.href} className="glass-card p-4 rounded-xl hover:border-[#8B5CF6]/50 transition-all">
+                  <div className="font-semibold text-white">{p.name}</div>
+                  <div className="text-xs text-[#9BA3B7]">{p.desc}</div>
+                </a>
+              ))}
+            </div>
+            <p>
+              Visit <a href="/protocol" className="text-[#8B5CF6] hover:underline">/protocol</a> for the full architecture overview, or follow any link above for per-primitive deep dives.
+            </p>
           </Section>
 
           {/* ════════════ QUICK START ════════════ */}

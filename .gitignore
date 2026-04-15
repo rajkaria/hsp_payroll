@@ -24,3 +24,8 @@ node_modules/
 cache/
 artifacts/
 out/
+.burn-rate/
+
+# Demo video (large — kept local)
+demo-video/
+
