@@ -1,0 +1,48 @@
+{
+  "_comment": "Drop the `hashpay` block into your Claude Desktop config at ~/Library/Application Support/Claude/claude_desktop_config.json (macOS) or %APPDATA%/Claude/claude_desktop_config.json (Windows). Restart Claude Desktop after editing.",
+  "mcpServers": {
+    "hashpay": {
+      "command": "npx",
+      "args": ["-y", "@hashpay/mcp-server"],
+      "env": {
+        "HASHPAY_MODE": "read",
+        "HASHPAY_DEFAULT_CHAIN": "11155111",
+        "HASHPAY_ALLOWED_CHAINS": "11155111,133"
+      }
+    },
+    "hashpay-write-privkey": {
+      "_comment": "Uncomment to enable write mode with a private-key signer. Never commit this file with a real key.",
+      "command": "npx",
+      "args": ["-y", "@hashpay/mcp-server"],
+      "env": {
+        "HASHPAY_MODE": "write",
+        "HASHPAY_SIGNER": "privateKey",
+        "HASHPAY_PRIVATE_KEY": "0xYOUR_TEST_KEY_HERE",
+        "HASHPAY_MAX_SPEND_PER_SESSION": "1000000000",
+        "HASHPAY_ALLOWED_CHAINS": "11155111,133"
+      }
+    },
+    "hashpay-ledger": {
+      "_comment": "Hardware-wallet signer. Requires `npm install @ledgerhq/hw-app-eth @ledgerhq/hw-transport-node-hid`.",
+      "command": "npx",
+      "args": ["-y", "@hashpay/mcp-server"],
+      "env": {
+        "HASHPAY_MODE": "write",
+        "HASHPAY_SIGNER": "ledger",
+        "HASHPAY_LEDGER_PATH": "44'/60'/0'/0/0",
+        "HASHPAY_ALLOWED_CHAINS": "11155111,133"
+      }
+    },
+    "hashpay-walletconnect": {
+      "_comment": "WalletConnect v2 signer. Get a project ID free at https://cloud.reown.com.",
+      "command": "npx",
+      "args": ["-y", "@hashpay/mcp-server"],
+      "env": {
+        "HASHPAY_MODE": "write",
+        "HASHPAY_SIGNER": "walletconnect",
+        "HASHPAY_WC_PROJECT_ID": "your-reown-project-id",
+        "HASHPAY_ALLOWED_CHAINS": "11155111,133"
+      }
+    }
+  }
+}

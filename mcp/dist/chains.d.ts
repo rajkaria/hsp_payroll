@@ -1,0 +1,40 @@
+import { type Chain } from "viem/chains";
+export declare const hashkeyChain: Chain;
+export declare const hashkeyTestnet: Chain;
+export type CoreAddresses = {
+    HSP_ADAPTER?: `0x${string}`;
+    PAYROLL_FACTORY?: `0x${string}`;
+    MOCK_USDT?: `0x${string}`;
+    PAYROLL_ATTESTOR?: `0x${string}`;
+    EAS?: `0x${string}`;
+    EAS_SCHEMA_UID?: `0x${string}`;
+};
+export type ProtocolAddresses = {
+    REPUTATION_REGISTRY?: `0x${string}`;
+    ADAPTIVE_CADENCE?: `0x${string}`;
+    MOCK_YIELD_VAULT?: `0x${string}`;
+    YIELD_ESCROW?: `0x${string}`;
+    PAYROLL_ADVANCE?: `0x${string}`;
+    COMPLIANCE_REGISTRY?: `0x${string}`;
+    KYC_SBT?: `0x${string}`;
+    KYC_HOOK?: `0x${string}`;
+    JURISDICTION_HOOK?: `0x${string}`;
+    SANCTIONS_HOOK?: `0x${string}`;
+    SALARY_INDEX?: `0x${string}`;
+};
+export type ChainEntry = {
+    chain: Chain;
+    rpcUrlEnv?: string;
+    core: CoreAddresses;
+    protocol: ProtocolAddresses;
+    status: "deployed" | "partial" | "undeployed";
+};
+export declare const CHAIN_REGISTRY: Record<number, ChainEntry>;
+export declare const DEFAULT_CHAIN_ID: number;
+export declare function allowedChainIds(): number[];
+export declare function getChainEntry(chainId: number): ChainEntry;
+export declare function requireProtocol(chainId: number, key: keyof ProtocolAddresses): `0x${string}`;
+export declare function requireCore(chainId: number, key: keyof CoreAddresses): `0x${string}`;
+export declare function explorerUrl(chainId: number, txHash: string): string;
+export declare function addressUrl(chainId: number, address: string): string;
+export declare function rpcUrl(chainId: number): string;
