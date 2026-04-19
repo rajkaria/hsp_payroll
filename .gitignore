@@ -29,3 +29,16 @@ out/
 # Demo video (large — kept local)
 demo-video/
 
+
+# Personal demo notes — not for public repo
+DEMO.md
+
+# Internal / AI-agent working docs — not for public repo
+CLAUDE.md
+frontend/CLAUDE.md
+frontend/AGENTS.md
+HSP_PAYROLL_HACKATHON_BUILD_SPEC.md
+
+# Demo seed scripts (contain internal tx patterns)
+contracts/scripts/seed-demo.ts
+contracts/scripts/seed-lender.ts
