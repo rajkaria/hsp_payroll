@@ -5,7 +5,7 @@ import { ConnectButton } from "@/components/connect-button";
 import { EmployeePayments } from "@/components/employee-payments";
 import { ReputationChip } from "@/components/reputation-chip";
 import { PayrollAdvanceCard } from "@/components/payroll-advance-card";
-import { CadenceSelector } from "@/components/cadence-selector";
+import { CadencePanel } from "@/components/cadence-panel";
 import { useRecipientPayrolls } from "@/hooks/usePayrolls";
 import { motion } from "framer-motion";
 import { Wallet, FileText, ArrowLeft } from "lucide-react";
@@ -108,13 +108,10 @@ export default function EmployeeDashboard() {
 
             <section className="space-y-3">
               <SectionLabel title="Payout Cadence" hint="Choose how each cycle reaches your wallet" />
-              {payrollIds.map((id) => (
-                <CadenceSelector
-                  key={id.toString()}
-                  payrollId={BigInt(id.toString())}
-                  recipient={address as `0x${string}`}
-                />
-              ))}
+              <CadencePanel
+                payrollIds={payrollIds.map((id) => BigInt(id.toString()))}
+                recipient={address as `0x${string}`}
+              />
             </section>
 
             <section className="space-y-3">
