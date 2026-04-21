@@ -11,6 +11,15 @@ import { motion } from "framer-motion";
 import { Wallet, FileText, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+function SectionLabel({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="flex items-baseline justify-between px-1">
+      <h2 className="text-[11px] uppercase tracking-widest text-[#9BA3B7] font-semibold">{title}</h2>
+      {hint && <span className="text-[10px] text-[#5A6178] hidden sm:block">{hint}</span>}
+    </div>
+  );
+}
+
 export default function EmployeeDashboard() {
   const { address, isConnected } = useAccount();
   const { data: payrollIds } = useRecipientPayrolls(address as `0x${string}` | undefined);
@@ -82,19 +91,23 @@ export default function EmployeeDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="space-y-6"
+            className="space-y-8"
           >
-            <ReputationChip address={address as `0x${string}`} />
+            <section className="space-y-3">
+              <SectionLabel title="Credit Identity" hint="Your verified income builds borrowing power" />
+              <ReputationChip address={address as `0x${string}`} />
+            </section>
 
-            <PayrollAdvanceCard
-              address={address as `0x${string}`}
-              payrollIds={payrollIds.map((id) => BigInt(id.toString()))}
-            />
+            <section className="space-y-3">
+              <SectionLabel title="Receipt-Backed Advance" hint="Borrow against your next payout · auto-repaid on cycle" />
+              <PayrollAdvanceCard
+                address={address as `0x${string}`}
+                payrollIds={payrollIds.map((id) => BigInt(id.toString()))}
+              />
+            </section>
 
-            <EmployeePayments payrollIds={payrollIds.map((id) => BigInt(id.toString()))} address={address!} />
-
-            <div className="space-y-3">
-              <div className="text-[10px] uppercase tracking-wide text-[#5A6178]">Payout cadence (per payroll)</div>
+            <section className="space-y-3">
+              <SectionLabel title="Payout Cadence" hint="Choose how each cycle reaches your wallet" />
               {payrollIds.map((id) => (
                 <CadenceSelector
                   key={id.toString()}
@@ -102,10 +115,15 @@ export default function EmployeeDashboard() {
                   recipient={address as `0x${string}`}
                 />
               ))}
-            </div>
+            </section>
 
-            <div className="text-xs text-[#5A6178] text-center">
-              All payments settled via HashKey Settlement Protocol on HashKey Chain
+            <section className="space-y-3">
+              <SectionLabel title="Payment History" hint="All settled cycles with on-chain receipts" />
+              <EmployeePayments payrollIds={payrollIds.map((id) => BigInt(id.toString()))} address={address!} />
+            </section>
+
+            <div className="text-xs text-[#5A6178] text-center pt-4">
+              All payments settled via HashKey Settlement Protocol
             </div>
           </motion.div>
         )}

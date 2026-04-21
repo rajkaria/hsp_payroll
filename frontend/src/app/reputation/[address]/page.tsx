@@ -7,16 +7,25 @@ import { getProtocol } from "@/config/protocol-contracts";
 import { formatUnits, isAddress } from "viem";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Award, TrendingUp, Users, CheckCircle2, ExternalLink, Share2 } from "lucide-react";
+import { toast } from "sonner";
+import { Award, TrendingUp, Users, CheckCircle2, Share2, ArrowLeft } from "lucide-react";
 
 const MILESTONES = [
-  { usd: 1_000, label: "Verified Earner", color: "from-gray-500 to-gray-700" },
-  { usd: 10_000, label: "Established", color: "from-blue-500 to-indigo-700" },
-  { usd: 50_000, label: "Professional", color: "from-emerald-500 to-teal-700" },
-  { usd: 100_000, label: "Veteran", color: "from-purple-500 to-fuchsia-700" },
-  { usd: 500_000, label: "Elite", color: "from-amber-500 to-orange-700" },
-  { usd: 1_000_000, label: "Legend", color: "from-pink-500 to-rose-700" },
+  { usd: 1_000, label: "Verified Earner", color: "#5A6178", bg: "rgba(90,97,120,0.18)" },
+  { usd: 10_000, label: "Established", color: "#06B6D4", bg: "rgba(6,182,212,0.18)" },
+  { usd: 50_000, label: "Professional", color: "#10B981", bg: "rgba(16,185,129,0.18)" },
+  { usd: 100_000, label: "Veteran", color: "#8B5CF6", bg: "rgba(139,92,246,0.18)" },
+  { usd: 500_000, label: "Elite", color: "#F59E0B", bg: "rgba(245,158,11,0.18)" },
+  { usd: 1_000_000, label: "Legend", color: "#EC4899", bg: "rgba(236,72,153,0.18)" },
 ];
+
+type HistoryEntry = {
+  employer: string;
+  amount: bigint;
+  timestamp: bigint;
+  uid: string;
+  onTime: boolean;
+};
 
 export default function ReputationPage() {
   const params = useParams<{ address: string }>();
@@ -62,13 +71,23 @@ export default function ReputationPage() {
     query: { enabled: !!registry && !!valid },
   });
 
-  if (!valid) return <div className="p-12 text-center text-red-500">Invalid address</div>;
+  if (!valid) {
+    return (
+      <div className="min-h-screen flex items-center justify-center relative">
+        <div className="fixed inset-0 bg-grid pointer-events-none" />
+        <div className="glass rounded-2xl p-8 text-center">
+          <div className="text-[#EF4444]">Invalid address</div>
+        </div>
+      </div>
+    );
+  }
   if (!registry) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-md text-center space-y-4">
-          <h1 className="text-2xl font-bold">Reputation not available on this chain</h1>
-          <p className="text-sm text-gray-500">Switch to a chain with the protocol deployed.</p>
+      <div className="min-h-screen flex items-center justify-center relative">
+        <div className="fixed inset-0 bg-grid pointer-events-none" />
+        <div className="glass rounded-2xl p-8 max-w-md text-center space-y-3">
+          <h1 className="text-xl font-bold">Reputation not available on this chain</h1>
+          <p className="text-sm text-[#9BA3B7]">Switch to a chain with the protocol deployed.</p>
         </div>
       </div>
     );
@@ -78,59 +97,82 @@ export default function ReputationPage() {
   const onTimePct = onTime ? Number(onTime as bigint) / 100 : 0;
   const milestoneUsd = milestone ? Number(formatUnits(milestone as bigint, 6)) : 0;
   const milestoneBadge = MILESTONES.filter((m) => m.usd <= milestoneUsd).pop();
-  const totalCycles = Array.isArray(history) ? (history as any[]).length : 0;
+  const totalCycles = Array.isArray(history) ? (history as HistoryEntry[]).length : 0;
 
   const historyPoints: { t: number; cum: number; amount: number }[] = [];
   if (Array.isArray(history)) {
     let cum = 0;
-    for (const pt of history as any[]) {
-      cum += Number(formatUnits(pt.amount as bigint, 6));
-      historyPoints.push({ t: Number(pt.timestamp), cum, amount: Number(formatUnits(pt.amount as bigint, 6)) });
+    for (const pt of history as HistoryEntry[]) {
+      cum += Number(formatUnits(pt.amount, 6));
+      historyPoints.push({ t: Number(pt.timestamp), cum, amount: Number(formatUnits(pt.amount, 6)) });
     }
   }
 
   const maxCum = historyPoints.length ? historyPoints[historyPoints.length - 1].cum : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-black dark:via-slate-950 dark:to-indigo-950">
-      <div className="max-w-4xl mx-auto p-6 py-16 space-y-8">
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">&larr; HashPay</Link>
+    <div className="min-h-screen relative">
+      <div className="fixed inset-0 bg-grid pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#F59E0B]/[0.04] rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-[#8B5CF6]/[0.05] rounded-full blur-[140px] pointer-events-none" />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="flex items-center gap-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-            <CheckCircle2 className="w-3.5 h-3.5" />
+      <div className="max-w-4xl mx-auto px-6 py-10 relative">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-[#5A6178] hover:text-white transition mb-8">
+          <ArrowLeft className="w-3.5 h-3.5" /> HashPay
+        </Link>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mb-8">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#10B981] font-medium bg-[#10B981]/10 border border-[#10B981]/20 rounded-full px-3 py-1">
+            <CheckCircle2 className="w-3 h-3" />
             Verified Income Identity
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            ${incomeUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-            <span className="text-gray-400 text-2xl ml-3">lifetime verified</span>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-[family-name:var(--font-space-grotesk)]">
+            <span className="gradient-text">${incomeUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            <span className="text-[#5A6178] text-xl ml-3 font-normal">lifetime verified</span>
           </h1>
-          <p className="text-sm font-mono text-gray-500 break-all">{address}</p>
+          <p className="text-xs font-mono text-[#5A6178] break-all">{address}</p>
           {milestoneBadge && (
-            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-white bg-gradient-to-r ${milestoneBadge.color}`}>
+            <div
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border"
+              style={{ background: milestoneBadge.bg, borderColor: `${milestoneBadge.color}40`, color: milestoneBadge.color }}
+            >
               <Award className="w-4 h-4" />
               <span className="text-sm font-semibold">{milestoneBadge.label}</span>
             </div>
           )}
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat icon={<TrendingUp className="w-4 h-4" />} label="Total Income" value={`$${incomeUsd.toLocaleString()}`} />
-          <Stat icon={<Users className="w-4 h-4" />} label="Employers" value={`${employers ?? 0}`} />
-          <Stat icon={<CheckCircle2 className="w-4 h-4" />} label="On-Time Rate" value={`${onTimePct.toFixed(1)}%`} />
-          <Stat icon={<Award className="w-4 h-4" />} label="Cycles" value={`${totalCycles}`} />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"
+        >
+          <Stat icon={<TrendingUp className="w-3.5 h-3.5" />} label="Total Income" value={`$${incomeUsd.toLocaleString()}`} accent="#10B981" />
+          <Stat icon={<Users className="w-3.5 h-3.5" />} label="Employers" value={`${employers ?? 0}`} />
+          <Stat icon={<CheckCircle2 className="w-3.5 h-3.5" />} label="On-Time Rate" value={`${onTimePct.toFixed(1)}%`} accent={onTimePct >= 80 ? "#10B981" : undefined} />
+          <Stat icon={<Award className="w-3.5 h-3.5" />} label="Cycles" value={`${totalCycles}`} />
+        </motion.div>
 
         {historyPoints.length > 0 && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-200 dark:border-slate-800">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass rounded-2xl p-6 border border-white/5 mb-6"
+          >
+            <h2 className="text-[10px] font-semibold text-[#5A6178] uppercase tracking-widest mb-4">
               Cumulative Income
             </h2>
-            <svg viewBox="0 0 400 120" className="w-full h-32">
+            <svg viewBox="0 0 400 120" className="w-full h-36">
               <defs>
                 <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#8B5CF6" />
+                  <stop offset="100%" stopColor="#C084FC" />
                 </linearGradient>
               </defs>
               {(() => {
@@ -144,33 +186,42 @@ export default function ReputationPage() {
                 return (
                   <>
                     <path d={area} fill="url(#g)" />
-                    <path d={`M ${line}`} fill="none" stroke="#6366f1" strokeWidth="2" />
+                    <path d={`M ${line}`} fill="none" stroke="url(#line)" strokeWidth="2" />
                   </>
                 );
               })()}
             </svg>
-          </div>
+          </motion.div>
         )}
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-200 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-4">
-            Composability
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="glass rounded-2xl p-6 border border-white/5 mb-6"
+        >
+          <h2 className="text-[10px] font-semibold text-[#5A6178] uppercase tracking-widest mb-3">Composability</h2>
+          <p className="text-sm text-[#9BA3B7] mb-4">
             Any DeFi or PayFi protocol can verify this income permissionlessly:
           </p>
-          <pre className="text-xs bg-slate-100 dark:bg-slate-950 p-4 rounded-lg overflow-x-auto">
-            <code>{`// Chainlink-compatible oracle call\nIReputation(${registry}).verifyMinimumIncome(\n  ${address},\n  50_000 * 1e6,  // $50k min\n  90 days         // window\n);`}</code>
+          <pre className="text-xs bg-black/60 border border-white/5 p-5 rounded-xl overflow-x-auto font-mono">
+<code className="text-[#C084FC]">{`// Chainlink-compatible oracle call
+IReputation(${registry.slice(0, 10)}…).verifyMinimumIncome(
+  ${address.slice(0, 10)}…,
+  50_000 * 1e6,  // $50k minimum
+  90 days         // window
+);`}</code>
           </pre>
-        </div>
+        </motion.div>
 
-        <div className="flex items-center justify-center pt-8">
+        <div className="flex items-center justify-center pt-4">
           <button
             onClick={() => {
               const url = typeof window !== "undefined" ? window.location.href : "";
               navigator.clipboard?.writeText(url);
+              toast.success("Link copied");
             }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white text-sm font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition"
           >
             <Share2 className="w-4 h-4" />
             Share this identity
@@ -181,11 +232,11 @@ export default function ReputationPage() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: string }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800">
-      <div className="text-xs text-gray-500 flex items-center gap-1.5">{icon} {label}</div>
-      <div className="text-xl font-bold mt-1">{value}</div>
+    <div className="glass rounded-xl p-4 border border-white/5">
+      <div className="text-[10px] uppercase tracking-wide text-[#5A6178] flex items-center gap-1.5 mb-1.5">{icon} {label}</div>
+      <div className="font-semibold text-lg" style={{ color: accent }}>{value}</div>
     </div>
   );
 }

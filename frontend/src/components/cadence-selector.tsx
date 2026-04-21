@@ -1,17 +1,18 @@
 "use client";
 
-import { useReadContract, useWriteContract, useChainId } from "wagmi";
+import { useReadContract, useWriteContract, useChainId, useWaitForTransactionReceipt } from "wagmi";
 import { ADAPTIVE_CADENCE_ABI } from "@/config/protocol-abis";
 import { getProtocol } from "@/config/protocol-contracts";
 import { formatUnits } from "viem";
 import { useEffect, useState } from "react";
-import { Zap, Package, Hand, Scissors } from "lucide-react";
+import { Zap, Package, Hand, Scissors, Loader2, Lock } from "lucide-react";
+import { toast } from "sonner";
 
 const MODES = [
   { v: 0, name: "Batch", icon: Package, desc: "Full amount at execute" },
-  { v: 1, name: "Stream", icon: Zap, desc: "Ticks per second, claim anytime" },
-  { v: 2, name: "Pull", icon: Hand, desc: "Accumulates, claim on-demand" },
-  { v: 3, name: "Hybrid", icon: Scissors, desc: "Split: part stream, part batch" },
+  { v: 1, name: "Stream", icon: Zap, desc: "Ticks per second" },
+  { v: 2, name: "Pull", icon: Hand, desc: "Claim on demand" },
+  { v: 3, name: "Hybrid", icon: Scissors, desc: "Part stream, part batch" },
 ];
 
 export function CadenceSelector({
@@ -25,15 +26,15 @@ export function CadenceSelector({
   const protocol = getProtocol(chainId);
   const cadenceAddr = protocol.ADAPTIVE_CADENCE as `0x${string}` | undefined;
 
-  const { data: state } = useReadContract({
+  const { data: state, refetch: refetchState } = useReadContract({
     address: cadenceAddr,
     abi: ADAPTIVE_CADENCE_ABI,
     functionName: "getCadenceState",
     args: [payrollId, recipient],
-    query: { enabled: !!cadenceAddr },
+    query: { enabled: !!cadenceAddr, refetchInterval: 5000 },
   });
 
-  const { data: accrued } = useReadContract({
+  const { data: accrued, refetch: refetchAccrued } = useReadContract({
     address: cadenceAddr,
     abi: ADAPTIVE_CADENCE_ABI,
     functionName: "accruedFor",
@@ -42,73 +43,119 @@ export function CadenceSelector({
   });
 
   const { writeContractAsync, isPending } = useWriteContract();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const { isSuccess, isLoading: isConfirming } = useWaitForTransactionReceipt({ hash: txHash ?? undefined });
   const [localMode, setLocalMode] = useState<number>(0);
 
   useEffect(() => {
-    if (state && typeof (state as any).mode !== "undefined") {
-      setLocalMode(Number((state as any).mode));
+    if (state && typeof (state as { mode?: number }).mode !== "undefined") {
+      setLocalMode(Number((state as { mode: number }).mode));
     }
   }, [state]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      refetchState();
+      refetchAccrued();
+      setTxHash(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess]);
 
   async function switchMode(mode: number) {
     if (!cadenceAddr) return;
     setLocalMode(mode);
-    await writeContractAsync({
-      address: cadenceAddr,
-      abi: ADAPTIVE_CADENCE_ABI,
-      functionName: "setRecipientCadence",
-      args: [payrollId, mode],
-    });
+    try {
+      const hash = await writeContractAsync({
+        address: cadenceAddr,
+        abi: ADAPTIVE_CADENCE_ABI,
+        functionName: "setRecipientCadence",
+        args: [payrollId, mode],
+      });
+      setTxHash(hash);
+      toast.success(`Switched to ${MODES[mode].name}`);
+    } catch (e: unknown) {
+      toast.error("Switch failed", { description: (e instanceof Error ? e.message : "").slice(0, 160) });
+    }
   }
 
   async function claim() {
     if (!cadenceAddr) return;
-    await writeContractAsync({
-      address: cadenceAddr,
-      abi: ADAPTIVE_CADENCE_ABI,
-      functionName: "claim",
-      args: [payrollId],
-    });
+    try {
+      const hash = await writeContractAsync({
+        address: cadenceAddr,
+        abi: ADAPTIVE_CADENCE_ABI,
+        functionName: "claim",
+        args: [payrollId],
+      });
+      setTxHash(hash);
+      toast.success("Claim submitted");
+    } catch (e: unknown) {
+      toast.error("Claim failed", { description: (e instanceof Error ? e.message : "").slice(0, 160) });
+    }
   }
 
   if (!cadenceAddr) return null;
 
   const accruedUsd = accrued ? Number(formatUnits(accrued as bigint, 6)) : 0;
-  const canSwitch = state ? (state as any).recipientCanSwitch : false;
+  const canSwitch = state ? (state as { recipientCanSwitch: boolean }).recipientCanSwitch : false;
+  const configured = state ? (state as { configured: boolean }).configured : false;
+  const busy = isPending || isConfirming;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Cadence</h3>
+    <div className="glass rounded-2xl p-5 border border-white/5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Package className="w-4 h-4 text-[#8B5CF6]" />
+          <h3 className="font-semibold text-sm">Payout Cadence · Payroll #{payrollId.toString()}</h3>
+        </div>
         {accruedUsd > 0 && (
           <button
             onClick={claim}
-            disabled={isPending}
-            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-full font-medium"
+            disabled={busy}
+            className="px-3 py-1.5 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white text-xs rounded-full font-medium disabled:opacity-40 flex items-center gap-1.5 hover:shadow-[0_0_18px_rgba(139,92,246,0.25)] transition"
           >
+            {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
             Claim ${accruedUsd.toFixed(4)}
           </button>
         )}
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        {MODES.map((m) => (
-          <button
-            key={m.v}
-            onClick={() => canSwitch && switchMode(m.v)}
-            disabled={!canSwitch}
-            className={`p-3 rounded-xl border text-xs flex flex-col items-center gap-1.5 transition ${
-              localMode === m.v
-                ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950"
-                : "border-gray-200 dark:border-slate-700"
-            } ${canSwitch ? "hover:border-indigo-400 cursor-pointer" : "opacity-60"}`}
-          >
-            <m.icon className="w-4 h-4" />
-            <span className="font-medium">{m.name}</span>
-            <span className="text-[10px] text-gray-500 text-center">{m.desc}</span>
-          </button>
-        ))}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {MODES.map((m) => {
+          const active = localMode === m.v && configured;
+          const disabled = !canSwitch || busy;
+          return (
+            <button
+              key={m.v}
+              onClick={() => canSwitch && !busy && switchMode(m.v)}
+              disabled={disabled}
+              className={`relative p-3 rounded-xl border text-xs flex flex-col items-center gap-1.5 transition ${
+                active
+                  ? "border-[#8B5CF6]/60 bg-[#8B5CF6]/10 shadow-[inset_0_0_20px_rgba(139,92,246,0.08)]"
+                  : "border-white/10 bg-[#0A0B14]/50"
+              } ${canSwitch && !busy ? "hover:border-[#8B5CF6]/40 cursor-pointer" : "cursor-not-allowed opacity-70"}`}
+            >
+              <m.icon className={`w-4 h-4 ${active ? "text-[#C084FC]" : "text-[#9BA3B7]"}`} />
+              <span className={`font-medium ${active ? "text-white" : "text-[#9BA3B7]"}`}>{m.name}</span>
+              <span className="text-[10px] text-[#5A6178] text-center leading-tight">{m.desc}</span>
+            </button>
+          );
+        })}
       </div>
-      {!canSwitch && <p className="text-xs text-gray-500">Employer hasn't permitted mode switching.</p>}
+
+      {!configured && (
+        <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#5A6178]">
+          <Lock className="w-3 h-3" />
+          Default: Batch. Employer hasn't configured a cadence policy yet.
+        </div>
+      )}
+      {configured && !canSwitch && (
+        <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#5A6178]">
+          <Lock className="w-3 h-3" />
+          Employer has locked mode switching.
+        </div>
+      )}
     </div>
   );
 }
