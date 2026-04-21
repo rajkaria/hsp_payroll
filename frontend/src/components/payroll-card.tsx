@@ -6,7 +6,7 @@ import { useExecuteCycle } from "@/hooks/useExecuteCycle";
 import { useAttestCycle } from "@/hooks/useAttestation";
 import { useCancelPayroll } from "@/hooks/useCancelPayroll";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
-import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2, Timer, XCircle } from "lucide-react";
+import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2, Timer, MoreHorizontal } from "lucide-react";
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
 import { HSPPaymentButton } from "./hsp-payment-button";
@@ -34,6 +34,7 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   const { data: escrow, refetch: refetchEscrow } = useEscrowBalance(payrollId);
   const { data: runway, refetch: refetchRunway } = useRunway(payrollId);
   const [fundOpen, setFundOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const refetchAll = () => {
     refetchDetails();
     refetchEscrow();
@@ -45,6 +46,13 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   const { chain, address } = useAccount();
   const [now, setNow] = useState(Date.now() / 1000);
   const [confirmCancel, setConfirmCancel] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDocClick = () => setMenuOpen(false);
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [menuOpen]);
 
   // Update countdown every 30 seconds
   useEffect(() => {
@@ -179,6 +187,51 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
           <div className="text-sm text-[#9BA3B7] glass px-3 py-1.5 rounded-lg">
             {frequencyToLabel(Number(frequency))}
           </div>
+          {active && (
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                className="p-2 glass rounded-lg hover:border-[#8B5CF6]/30 transition-all"
+                title="More actions"
+                aria-label="More actions"
+              >
+                <MoreHorizontal className="w-4 h-4 text-[#9BA3B7]" />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-56 glass rounded-xl border border-white/10 shadow-xl z-20 overflow-hidden">
+                  {cycleCount > 0n && address && (
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        attest(payrollId, cycleCount, address as `0x${string}`, token as `0x${string}`, "USDT");
+                      }}
+                      disabled={attestPending || attestConfirming || attestSuccess}
+                      className="w-full px-3 py-2.5 text-left text-sm text-[#9BA3B7] hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2 disabled:opacity-40"
+                    >
+                      {attestSuccess ? (
+                        <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+                      ) : attestPending || attestConfirming ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-[#06B6D4]" />
+                      ) : (
+                        <Shield className="w-4 h-4 text-[#06B6D4]" />
+                      )}
+                      {attestSuccess ? "Attested on-chain" : attestPending ? "Confirm attestation…" : attestConfirming ? "Creating attestations…" : "Create EAS attestations"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setConfirmCancel(true);
+                    }}
+                    className="w-full px-3 py-2.5 text-left text-sm text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors flex items-center gap-2"
+                  >
+                    <Zap className="w-4 h-4 rotate-180" />
+                    Cancel payroll &amp; refund
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -222,38 +275,6 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
         </a>
       )}
 
-      {/* EAS Attestation — persistent: shows for ANY payroll with completed cycles */}
-      {cycleCount > 0n && active && address && (
-        <div className="mt-3">
-          <button
-            onClick={() => attest(payrollId, cycleCount, address as `0x${string}`, token as `0x${string}`, "USDT")}
-            disabled={attestPending || attestConfirming || attestSuccess}
-            className="w-full px-4 py-2.5 glass rounded-xl font-medium hover:border-[#8B5CF6]/30 transition-all duration-300 disabled:opacity-40 flex items-center justify-center gap-2 text-sm text-[#9BA3B7] hover:text-white"
-          >
-            {attestPending ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Confirm attestation...</>
-            ) : attestConfirming ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Creating attestations...</>
-            ) : attestSuccess ? (
-              <><CheckCircle2 className="w-4 h-4 text-[#10B981]" /> Attested on-chain</>
-            ) : (
-              <><Shield className="w-4 h-4 text-[#06B6D4]" /> Create EAS Attestations</>
-            )}
-          </button>
-          {attestSuccess && attestHash && (
-            <a
-              href={getExplorerTxUrl(attestHash, chain?.id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-1.5 text-xs text-[#06B6D4] hover:text-[#22D3EE] transition-colors"
-            >
-              <ExternalLink className="w-3 h-3" />
-              View attestations on Explorer
-            </a>
-          )}
-        </div>
-      )}
-
       {/* Fund More + Pay via HSP — side-by-side when collapsed, full-width form when funding */}
       {active && (
         <div className="mt-3">
@@ -285,47 +306,49 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
         </div>
       )}
 
-      {lastExecuted > 0n && !isSuccess && (
-        <div className="mt-3 text-xs text-[#5A6178] text-center">
-          Last executed: {formatDate(Number(lastExecuted))}
+      {/* Cancel confirmation bar — only shown when user opens it from ⋯ menu */}
+      {confirmCancel && active && (
+        <div className="mt-3 glass rounded-xl p-3 border border-[#EF4444]/20 flex items-center gap-2">
+          <span className="text-xs text-[#9BA3B7] flex-1">
+            Cancel payroll? {escrow !== undefined ? formatAmount(escrow) : "..."} USDT will be refunded.
+          </span>
+          <button
+            onClick={() => setConfirmCancel(false)}
+            disabled={cancelPending || cancelConfirming}
+            className="px-2.5 py-1 text-xs rounded-lg glass text-[#9BA3B7] hover:text-white disabled:opacity-50"
+          >
+            Keep
+          </button>
+          <button
+            onClick={() => cancel(payrollId)}
+            disabled={cancelPending || cancelConfirming}
+            className="px-2.5 py-1 text-xs rounded-lg bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/20 hover:bg-[#EF4444]/25 transition-all flex items-center gap-1 disabled:opacity-50"
+          >
+            {cancelPending || cancelConfirming ? (
+              <><Loader2 className="w-3 h-3 animate-spin" /> Cancelling…</>
+            ) : (
+              <>Confirm</>
+            )}
+          </button>
         </div>
       )}
 
-      {/* Cancel Payroll — refunds remaining escrow */}
-      {active && (
-        <div className="mt-3 pt-3 border-t border-white/5">
-          {confirmCancel ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[#9BA3B7] flex-1">
-                Cancel payroll? Remaining escrow ({escrow !== undefined ? formatAmount(escrow) : "..."} USDT) will be refunded.
-              </span>
-              <button
-                onClick={() => setConfirmCancel(false)}
-                disabled={cancelPending || cancelConfirming}
-                className="px-2.5 py-1 text-xs rounded-lg glass text-[#9BA3B7] hover:text-white disabled:opacity-50"
-              >
-                Keep
-              </button>
-              <button
-                onClick={() => cancel(payrollId)}
-                disabled={cancelPending || cancelConfirming}
-                className="px-2.5 py-1 text-xs rounded-lg bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/20 hover:bg-[#EF4444]/25 transition-all flex items-center gap-1 disabled:opacity-50"
-              >
-                {cancelPending || cancelConfirming ? (
-                  <><Loader2 className="w-3 h-3 animate-spin" /> Cancelling…</>
-                ) : (
-                  <>Confirm cancel</>
-                )}
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmCancel(true)}
-              className="w-full px-3 py-2 text-xs rounded-lg text-[#9BA3B7] hover:text-[#EF4444] hover:bg-[#EF4444]/5 transition-all flex items-center justify-center gap-1.5"
+      {/* Footer meta row — last executed + attestation tx link (subtle) */}
+      {(lastExecuted > 0n || (attestSuccess && attestHash)) && (
+        <div className="mt-3 flex items-center justify-center gap-3 text-xs text-[#5A6178]">
+          {lastExecuted > 0n && !isSuccess && (
+            <span>Last executed: {formatDate(Number(lastExecuted))}</span>
+          )}
+          {attestSuccess && attestHash && (
+            <a
+              href={getExplorerTxUrl(attestHash, chain?.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[#06B6D4] hover:text-[#22D3EE] transition-colors"
             >
-              <XCircle className="w-3.5 h-3.5" />
-              Cancel payroll &amp; refund escrow
-            </button>
+              <ExternalLink className="w-3 h-3" />
+              Attestation tx
+            </a>
           )}
         </div>
       )}
