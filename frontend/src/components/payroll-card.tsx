@@ -29,9 +29,15 @@ function formatCountdown(seconds: number): string {
 }
 
 export function PayrollCard({ payrollId }: PayrollCardProps) {
-  const { data: details, isLoading } = usePayrollDetails(payrollId);
-  const { data: escrow } = useEscrowBalance(payrollId);
-  const { data: runway } = useRunway(payrollId);
+  const { data: details, isLoading, refetch: refetchDetails } = usePayrollDetails(payrollId);
+  const { data: escrow, refetch: refetchEscrow } = useEscrowBalance(payrollId);
+  const { data: runway, refetch: refetchRunway } = useRunway(payrollId);
+  const [fundOpen, setFundOpen] = useState(false);
+  const refetchAll = () => {
+    refetchDetails();
+    refetchEscrow();
+    refetchRunway();
+  };
   const { execute, hash, isPending, isConfirming, isSuccess, error: executeError } = useExecuteCycle();
   const { attest, hash: attestHash, isPending: attestPending, isConfirming: attestConfirming, isSuccess: attestSuccess, error: attestError } = useAttestCycle();
   const { chain, address } = useAccount();
@@ -51,6 +57,16 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
       });
     }
   }, [executeError]);
+
+  useEffect(() => {
+    if (isSuccess) refetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess]);
+
+  useEffect(() => {
+    if (attestSuccess) refetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attestSuccess]);
 
   useEffect(() => {
     if (attestError) {
@@ -220,20 +236,34 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
         </div>
       )}
 
-      {/* Fund more — deposit additional USDT into escrow */}
-      {active && (
-        <FundPayrollInline payrollId={payrollId} token={token as `0x${string}`} />
-      )}
-
-      {/* HSP Payment option */}
+      {/* Fund More + Pay via HSP — side-by-side when collapsed, full-width form when funding */}
       {active && (
         <div className="mt-3">
-          <HSPPaymentButton
-            payrollId={payrollId}
-            cycleNumber={Number(cycleCount) + 1}
-            totalAmount={formatAmount(totalPerCycle)}
-            recipientCount={recipients.length}
-          />
+          {fundOpen ? (
+            <FundPayrollInline
+              payrollId={payrollId}
+              token={token as `0x${string}`}
+              open={fundOpen}
+              onOpenChange={setFundOpen}
+              onFunded={refetchAll}
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <FundPayrollInline
+                payrollId={payrollId}
+                token={token as `0x${string}`}
+                open={fundOpen}
+                onOpenChange={setFundOpen}
+                onFunded={refetchAll}
+              />
+              <HSPPaymentButton
+                payrollId={payrollId}
+                cycleNumber={Number(cycleCount) + 1}
+                totalAmount={formatAmount(totalPerCycle)}
+                recipientCount={recipients.length}
+              />
+            </div>
+          )}
         </div>
       )}
 

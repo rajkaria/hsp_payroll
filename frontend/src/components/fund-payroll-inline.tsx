@@ -12,13 +12,15 @@ import { MOCK_ERC20_ABI } from "@/config/contracts";
 interface Props {
   payrollId: bigint;
   token: `0x${string}`;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onFunded?: () => void;
 }
 
-export function FundPayrollInline({ payrollId, token }: Props) {
+export function FundPayrollInline({ payrollId, token, open, onOpenChange, onFunded }: Props) {
   const contracts = useContracts();
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [phase, setPhase] = useState<"idle" | "approving" | "funding">("idle");
 
@@ -51,9 +53,10 @@ export function FundPayrollInline({ payrollId, token }: Props) {
       toast.success("Escrow funded", { description: `+${amount} USDT added to payroll #${payrollId.toString()}` });
       setPhase("idle");
       setAmount("");
-      setOpen(false);
+      onOpenChange(false);
+      onFunded?.();
     }
-  }, [fundSuccess, phase, amount, payrollId]);
+  }, [fundSuccess, phase, amount, payrollId, onOpenChange, onFunded]);
 
   const busy =
     phase !== "idle" || approvePending || approveConfirming || fundPending || fundConfirming;
@@ -94,8 +97,8 @@ export function FundPayrollInline({ payrollId, token }: Props) {
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
-        className="mt-3 w-full px-4 py-2.5 glass rounded-xl font-medium hover:border-[#8B5CF6]/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm text-[#9BA3B7] hover:text-white"
+        onClick={() => onOpenChange(true)}
+        className="w-full px-4 py-2.5 glass rounded-xl font-medium hover:border-[#8B5CF6]/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm text-[#9BA3B7] hover:text-white"
       >
         <Plus className="w-4 h-4 text-[#10B981]" />
         Fund More
@@ -104,12 +107,12 @@ export function FundPayrollInline({ payrollId, token }: Props) {
   }
 
   return (
-    <div className="mt-3 glass rounded-xl p-3 border border-[#10B981]/20">
+    <div className="glass rounded-xl p-3 border border-[#10B981]/20">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs text-[#9BA3B7] flex-1">Deposit USDT into escrow</span>
         <button
           onClick={() => {
-            setOpen(false);
+            onOpenChange(false);
             setAmount("");
           }}
           className="text-[#5A6178] hover:text-white transition-colors"
