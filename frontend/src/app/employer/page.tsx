@@ -6,7 +6,7 @@ import { ConnectButton } from "@/components/connect-button";
 import { PayrollCard } from "@/components/payroll-card";
 import { usePayrollCount } from "@/hooks/usePayrolls";
 import { motion } from "framer-motion";
-import { Plus, Wallet, ArrowLeft, BarChart3, Building2 } from "lucide-react";
+import { Plus, Wallet, ArrowLeft, BarChart3, Building2, History } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -80,6 +80,13 @@ export default function EmployerDashboard() {
               title="Analytics"
             >
               <BarChart3 className="w-4 h-4 text-[#9BA3B7]" />
+            </button>
+            <button
+              onClick={() => router.push("/employer/history")}
+              className="p-2.5 glass rounded-xl hover:border-[#8B5CF6]/30 transition-all"
+              title="Transaction History"
+            >
+              <History className="w-4 h-4 text-[#9BA3B7]" />
             </button>
             <button
               onClick={() => router.push("/employer/create")}

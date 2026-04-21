@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { HSPSandboxBanner } from "@/components/hsp-sandbox-banner";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceGrotesk = Space_Grotesk({
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <HSPSandboxBanner />
           {children}
+          <Toaster richColors position="top-right" />
         </Providers>
       </body>
     </html>
