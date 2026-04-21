@@ -436,8 +436,57 @@
   .adv-available .lbl { font-size: 10px; color: var(--text-dim); font-family: var(--font-mono); }
   .adv-available .val { font-size: 16px; color: var(--accent-hot); font-weight: 700; }
 
+  /* --- real screenshot gallery --- */
+  .screenshot-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 14px;
+    margin-top: 8px;
+    flex: 1;
+    min-height: 0;
+  }
+  .shot {
+    position: relative;
+    background: linear-gradient(180deg, #14141A 0%, #0E0E12 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    transition: transform 180ms ease, border-color 180ms ease;
+  }
+  .shot:hover { transform: translateY(-2px); border-color: var(--border-lit); }
+  .shot.shot-hero { grid-row: span 2; }
+  .shot.shot-tall { grid-row: span 2; }
+  .shot img {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    background: #0A0A0B;
+  }
+  .shot .pf-bar { flex-shrink: 0; }
+  .shot-cap {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 8px 12px;
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);
+    background: linear-gradient(180deg, transparent, rgba(10,10,11,0.92) 45%);
+    letter-spacing: 0.01em;
+  }
+  .shot-cap .cap-k {
+    color: var(--accent-hot);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    margin-right: 6px;
+  }
+
   .demo-cta {
-    margin-top: auto;
+    margin-top: 14px;
     display: flex; align-items: center; gap: 14px;
     padding: 14px 20px;
     background: rgba(124,123,247,0.06);
@@ -904,11 +953,68 @@
       </div>
 
       <div class="content">
-        <div class="kicker">&#x25B6; live on hashkey chain</div>
-        <h2 class="h1">Two tabs. <span class="accent">One cycle.</span> Ninety seconds.</h2>
-        <p class="lead">Here&rsquo;s what a HashPay cycle looks like end-to-end &mdash; from funded escrow to recipient borrowing against their next paycheck.</p>
+        <div class="kicker">&#x25B6; live at hashpay.tech</div>
+        <h2 class="h1">Real product. <span class="accent">Real screenshots.</span> Live on-chain.</h2>
+        <p class="lead">Shipped end-to-end on HashKey Chain + Sepolia &mdash; employer escrow, unified history, on-chain reputation, and receipt-backed advances, all in one premium dark UI.</p>
 
-        <div class="demo-grid">
+        <div class="screenshot-grid">
+          <div class="shot shot-hero">
+            <div class="pf-bar">
+              <span class="pf-dot" style="background:#FF5F57"></span>
+              <span class="pf-dot" style="background:#FEBC2E"></span>
+              <span class="pf-dot" style="background:#28C840"></span>
+              <span class="pf-url">hashpay.tech/employer &middot; payroll card</span>
+            </div>
+            <img src="/pitch/01-payroll-card.png" alt="Employer payroll card" loading="lazy" />
+            <div class="shot-cap"><span class="cap-k">EMPLOYER</span> Execute cycle, fund, HSP &mdash; one card per payroll.</div>
+          </div>
+
+          <div class="shot shot-tall">
+            <div class="pf-bar">
+              <span class="pf-dot" style="background:#FF5F57"></span>
+              <span class="pf-dot" style="background:#FEBC2E"></span>
+              <span class="pf-dot" style="background:#28C840"></span>
+              <span class="pf-url">hashpay.tech/employee</span>
+            </div>
+            <img src="/pitch/05-employee.png" alt="Employee credit identity and receipt-backed advance" loading="lazy" />
+            <div class="shot-cap"><span class="cap-k">EMPLOYEE</span> Credit tier + borrow against next payout.</div>
+          </div>
+
+          <div class="shot">
+            <div class="pf-bar">
+              <span class="pf-dot" style="background:#FF5F57"></span>
+              <span class="pf-dot" style="background:#FEBC2E"></span>
+              <span class="pf-dot" style="background:#28C840"></span>
+              <span class="pf-url">/employer/history</span>
+            </div>
+            <img src="/pitch/02-history.png" alt="On-chain transaction history" loading="lazy" />
+            <div class="shot-cap"><span class="cap-k">HISTORY</span> Every payment, cycle, funding event &mdash; on-chain.</div>
+          </div>
+
+          <div class="shot">
+            <div class="pf-bar">
+              <span class="pf-dot" style="background:#FF5F57"></span>
+              <span class="pf-dot" style="background:#FEBC2E"></span>
+              <span class="pf-dot" style="background:#28C840"></span>
+              <span class="pf-url">/employer &middot; analytics</span>
+            </div>
+            <img src="/pitch/03-analytics.png" alt="Payroll analytics charts" loading="lazy" />
+            <div class="shot-cap"><span class="cap-k">ANALYTICS</span> Volume, runway, and cost-per-employee at a glance.</div>
+          </div>
+
+          <div class="shot">
+            <div class="pf-bar">
+              <span class="pf-dot" style="background:#FF5F57"></span>
+              <span class="pf-dot" style="background:#FEBC2E"></span>
+              <span class="pf-dot" style="background:#28C840"></span>
+              <span class="pf-url">/employer/create</span>
+            </div>
+            <img src="/pitch/04-create.png" alt="Create new payroll" loading="lazy" />
+            <div class="shot-cap"><span class="cap-k">CREATE</span> Templates &rarr; stream cadence in under a minute.</div>
+          </div>
+        </div>
+
+        <div class="demo-grid" style="display:none;">
           <!-- LEFT: Employer dashboard -->
           <div class="product-frame emp-dash">
             <div class="pf-bar">
@@ -1010,8 +1116,8 @@
         </div>
 
         <div class="demo-cta">
-          <span class="cta-lbl">next up</span>
-          <span class="cta-txt">switching to the live product &mdash; execute a cycle, show the block explorer, trigger the advance&hellip;</span>
+          <span class="cta-lbl">try it now</span>
+          <span class="cta-txt">hashpay.tech &mdash; connect a wallet, mint testnet USDT, run a payroll cycle end-to-end in under two minutes.</span>
         </div>
       </div>
 
