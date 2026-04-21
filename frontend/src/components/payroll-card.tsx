@@ -9,6 +9,7 @@ import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, Externa
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
 import { HSPPaymentButton } from "./hsp-payment-button";
+import { FundPayrollInline } from "./fund-payroll-inline";
 import { getExplorerTxUrl } from "@/config/wagmi";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
@@ -217,6 +218,11 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
             </a>
           )}
         </div>
+      )}
+
+      {/* Fund more — deposit additional USDT into escrow */}
+      {active && (
+        <FundPayrollInline payrollId={payrollId} token={token as `0x${string}`} />
       )}
 
       {/* HSP Payment option */}

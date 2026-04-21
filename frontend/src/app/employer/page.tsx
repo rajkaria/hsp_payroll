@@ -4,6 +4,7 @@ import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { ConnectButton } from "@/components/connect-button";
 import { PayrollCard } from "@/components/payroll-card";
+import { USDTBalanceChip } from "@/components/usdt-balance-chip";
 import { usePayrollCount } from "@/hooks/usePayrolls";
 import { motion } from "framer-motion";
 import { Plus, Wallet, ArrowLeft, BarChart3, Building2, History } from "lucide-react";
@@ -67,6 +68,7 @@ export default function EmployerDashboard() {
             <p className="text-[#8B95A9] mt-1.5 text-sm">Manage your on-chain payrolls</p>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
+            <USDTBalanceChip />
             <button
               onClick={() => router.push("/employer/profile")}
               className="p-2.5 glass rounded-xl hover:border-[#8B5CF6]/30 transition-all"
