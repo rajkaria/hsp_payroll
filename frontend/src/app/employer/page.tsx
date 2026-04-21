@@ -69,27 +69,31 @@ export default function EmployerDashboard() {
           </div>
           <div className="flex flex-wrap gap-2 items-center">
             <USDTBalanceChip />
-            <button
-              onClick={() => router.push("/employer/profile")}
-              className="p-2.5 glass rounded-xl hover:border-[#8B5CF6]/30 transition-all"
-              title="Business Profile"
-            >
-              <Building2 className="w-4 h-4 text-[#9BA3B7]" />
-            </button>
-            <button
-              onClick={() => router.push("/employer/analytics")}
-              className="p-2.5 glass rounded-xl hover:border-[#8B5CF6]/30 transition-all"
-              title="Analytics"
-            >
-              <BarChart3 className="w-4 h-4 text-[#9BA3B7]" />
-            </button>
-            <button
-              onClick={() => router.push("/employer/history")}
-              className="p-2.5 glass rounded-xl hover:border-[#8B5CF6]/30 transition-all"
-              title="Transaction History"
-            >
-              <History className="w-4 h-4 text-[#9BA3B7]" />
-            </button>
+            <div className="flex items-center glass rounded-xl p-1 border border-white/[0.06]">
+              <button
+                onClick={() => router.push("/employer/profile")}
+                className="p-2 rounded-lg hover:bg-white/[0.04] transition-all group"
+                title="Business Profile"
+              >
+                <Building2 className="w-4 h-4 text-[#9BA3B7] group-hover:text-white transition-colors" />
+              </button>
+              <div className="w-px h-5 bg-white/[0.06]" />
+              <button
+                onClick={() => router.push("/employer/analytics")}
+                className="p-2 rounded-lg hover:bg-white/[0.04] transition-all group"
+                title="Analytics"
+              >
+                <BarChart3 className="w-4 h-4 text-[#9BA3B7] group-hover:text-white transition-colors" />
+              </button>
+              <div className="w-px h-5 bg-white/[0.06]" />
+              <button
+                onClick={() => router.push("/employer/history")}
+                className="p-2 rounded-lg hover:bg-white/[0.04] transition-all group"
+                title="Transaction History"
+              >
+                <History className="w-4 h-4 text-[#9BA3B7] group-hover:text-white transition-colors" />
+              </button>
+            </div>
             <button
               onClick={() => router.push("/employer/create")}
               className="group px-4 sm:px-5 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] text-white rounded-xl font-medium hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-300 flex items-center gap-2 text-sm"
