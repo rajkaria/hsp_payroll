@@ -2,13 +2,14 @@
 
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@/components/connect-button";
+import { ConnectGate } from "@/components/connect-gate";
 import { EmployeePayments } from "@/components/employee-payments";
 import { ReputationChip } from "@/components/reputation-chip";
 import { PayrollAdvanceCard } from "@/components/payroll-advance-card";
 import { CadencePanel } from "@/components/cadence-panel";
 import { useRecipientPayrolls } from "@/hooks/usePayrolls";
 import { motion } from "framer-motion";
-import { Wallet, FileText, ArrowLeft } from "lucide-react";
+import { FileText, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 function SectionLabel({ title, hint }: { title: string; hint?: string }) {
@@ -27,18 +28,17 @@ export default function EmployeeDashboard() {
 
   if (!isConnected) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen relative">
-        <div className="fixed inset-0 bg-grid pointer-events-none" />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-10 text-center relative"
-        >
-          <Wallet className="w-10 h-10 text-[#8B5CF6] mx-auto mb-4" />
-          <p className="text-[#9BA3B7] mb-6">Connect your wallet to view your payments</p>
-          <ConnectButton />
-        </motion.div>
-      </div>
+      <ConnectGate
+        eyebrow="Employee Dashboard"
+        title="Your"
+        highlight="income identity"
+        message="Connect your wallet to view verified payments, on-chain reputation, and borrow against your next payout."
+        features={[
+          { label: "Verified income", color: "#10B981" },
+          { label: "Credit tier", color: "#06B6D4" },
+          { label: "Stream payouts", color: "#8B5CF6" },
+        ]}
+      />
     );
   }
 

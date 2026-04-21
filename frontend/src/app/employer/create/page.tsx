@@ -2,10 +2,10 @@
 
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { ConnectButton } from "@/components/connect-button";
+import { ConnectGate } from "@/components/connect-gate";
 import { CreatePayrollForm } from "@/components/create-payroll-form";
 import { motion } from "framer-motion";
-import { ArrowLeft, Wallet } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function CreatePayrollPage() {
   const { isConnected } = useAccount();
@@ -13,18 +13,14 @@ export default function CreatePayrollPage() {
 
   if (!isConnected) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen relative">
-        <div className="fixed inset-0 bg-grid pointer-events-none" />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-10 text-center relative"
-        >
-          <Wallet className="w-10 h-10 text-[#8B5CF6] mx-auto mb-4" />
-          <p className="text-[#8B95A9] mb-6">Connect your wallet to continue</p>
-          <ConnectButton />
-        </motion.div>
-      </div>
+      <ConnectGate
+        eyebrow="Create Payroll"
+        title="Start a"
+        highlight="new payroll"
+        message="Connect your wallet to deploy an on-chain payroll — set recipients, cadence, and funding in one flow."
+        backHref="/employer"
+        backLabel="Back to Dashboard"
+      />
     );
   }
 

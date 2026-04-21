@@ -3,6 +3,7 @@
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { ConnectButton } from "@/components/connect-button";
+import { ConnectGate } from "@/components/connect-gate";
 import { PayrollCard } from "@/components/payroll-card";
 import { USDTBalanceChip } from "@/components/usdt-balance-chip";
 import { usePayrollCount } from "@/hooks/usePayrolls";
@@ -25,18 +26,17 @@ export default function EmployerDashboard() {
 
   if (!isConnected) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen relative">
-        <div className="fixed inset-0 bg-grid pointer-events-none" />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-10 text-center relative"
-        >
-          <Wallet className="w-10 h-10 text-[#8B5CF6] mx-auto mb-4" />
-          <p className="text-[#8B95A9] mb-6">Connect your wallet to manage payrolls</p>
-          <ConnectButton />
-        </motion.div>
-      </div>
+      <ConnectGate
+        eyebrow="Employer Dashboard"
+        title="Run payroll"
+        highlight="on-chain"
+        message="Connect your wallet to create payrolls, fund escrow, execute cycles, and surface income attestations for your team."
+        features={[
+          { label: "Escrow + yield", color: "#10B981" },
+          { label: "EAS attestations", color: "#F59E0B" },
+          { label: "Compliance hooks", color: "#EF4444" },
+        ]}
+      />
     );
   }
 
