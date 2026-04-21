@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { usePayrollDetails, useEscrowBalance, useRunway } from "@/hooks/usePayrolls";
 import { useExecuteCycle } from "@/hooks/useExecuteCycle";
 import { useAttestCycle } from "@/hooks/useAttestation";
+import { useCancelPayroll } from "@/hooks/useCancelPayroll";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
-import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2, Timer } from "lucide-react";
+import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2, Timer, XCircle } from "lucide-react";
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
 import { HSPPaymentButton } from "./hsp-payment-button";
@@ -40,8 +41,10 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   };
   const { execute, hash, isPending, isConfirming, isSuccess, error: executeError } = useExecuteCycle();
   const { attest, hash: attestHash, isPending: attestPending, isConfirming: attestConfirming, isSuccess: attestSuccess, error: attestError } = useAttestCycle();
+  const { cancel, isPending: cancelPending, isConfirming: cancelConfirming, isSuccess: cancelSuccess, error: cancelError } = useCancelPayroll();
   const { chain, address } = useAccount();
   const [now, setNow] = useState(Date.now() / 1000);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   // Update countdown every 30 seconds
   useEffect(() => {
@@ -75,6 +78,21 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
       });
     }
   }, [attestError]);
+
+  useEffect(() => {
+    if (cancelSuccess) {
+      toast.success("Payroll cancelled", { description: "Remaining escrow refunded to your wallet." });
+      setConfirmCancel(false);
+      refetchAll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cancelSuccess]);
+
+  useEffect(() => {
+    if (cancelError) {
+      toast.error("Cancel failed", { description: cancelError.message.slice(0, 120) });
+    }
+  }, [cancelError]);
 
   if (isLoading || !details) {
     return (
@@ -270,6 +288,45 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
       {lastExecuted > 0n && !isSuccess && (
         <div className="mt-3 text-xs text-[#5A6178] text-center">
           Last executed: {formatDate(Number(lastExecuted))}
+        </div>
+      )}
+
+      {/* Cancel Payroll — refunds remaining escrow */}
+      {active && (
+        <div className="mt-3 pt-3 border-t border-white/5">
+          {confirmCancel ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#9BA3B7] flex-1">
+                Cancel payroll? Remaining escrow ({escrow !== undefined ? formatAmount(escrow) : "..."} USDT) will be refunded.
+              </span>
+              <button
+                onClick={() => setConfirmCancel(false)}
+                disabled={cancelPending || cancelConfirming}
+                className="px-2.5 py-1 text-xs rounded-lg glass text-[#9BA3B7] hover:text-white disabled:opacity-50"
+              >
+                Keep
+              </button>
+              <button
+                onClick={() => cancel(payrollId)}
+                disabled={cancelPending || cancelConfirming}
+                className="px-2.5 py-1 text-xs rounded-lg bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/20 hover:bg-[#EF4444]/25 transition-all flex items-center gap-1 disabled:opacity-50"
+              >
+                {cancelPending || cancelConfirming ? (
+                  <><Loader2 className="w-3 h-3 animate-spin" /> Cancelling…</>
+                ) : (
+                  <>Confirm cancel</>
+                )}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmCancel(true)}
+              className="w-full px-3 py-2 text-xs rounded-lg text-[#9BA3B7] hover:text-[#EF4444] hover:bg-[#EF4444]/5 transition-all flex items-center justify-center gap-1.5"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              Cancel payroll &amp; refund escrow
+            </button>
+          )}
         </div>
       )}
     </div>
