@@ -439,8 +439,8 @@
   /* --- real screenshot gallery --- */
   .screenshot-grid {
     display: grid;
-    grid-template-columns: 1.35fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1.35fr 1fr;
     gap: 14px;
     margin-top: 8px;
     flex: 1;
@@ -455,28 +455,37 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    min-width: 0;
     transition: transform 180ms ease, border-color 180ms ease;
   }
   .shot:hover { transform: translateY(-2px); border-color: var(--border-lit); }
-  .shot.shot-hero { grid-row: span 2; }
-  .shot.shot-tall { grid-row: span 2; }
-  .shot img {
+  .shot.shot-hero { grid-column: 1 / span 2; grid-row: 1; }
+  .shot.shot-tall { grid-column: 3; grid-row: 1; }
+  .shot .pf-bar { flex-shrink: 0; }
+  .shot .shot-img {
     flex: 1;
-    width: 100%;
     min-height: 0;
+    overflow: hidden;
+    background: #0A0A0B;
+    position: relative;
+  }
+  .shot img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     object-position: top center;
     display: block;
-    background: #0A0A0B;
   }
-  .shot .pf-bar { flex-shrink: 0; }
   .shot-cap {
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
+    flex-shrink: 0;
     padding: 8px 12px;
     font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);
-    background: linear-gradient(180deg, transparent, rgba(10,10,11,0.92) 45%);
+    background: rgba(10,10,11,0.85);
+    border-top: 1px solid var(--border);
     letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .shot-cap .cap-k {
     color: var(--accent-hot);
@@ -965,7 +974,7 @@
               <span class="pf-dot" style="background:#28C840"></span>
               <span class="pf-url">hashpay.tech/employer &middot; payroll card</span>
             </div>
-            <img src="/pitch/01-payroll-card.png" alt="Employer payroll card" loading="lazy" />
+            <div class="shot-img"><img src="/pitch/01-payroll-card.png" alt="Employer payroll card" loading="lazy" /></div>
             <div class="shot-cap"><span class="cap-k">EMPLOYER</span> Execute cycle, fund, HSP &mdash; one card per payroll.</div>
           </div>
 
@@ -976,7 +985,7 @@
               <span class="pf-dot" style="background:#28C840"></span>
               <span class="pf-url">hashpay.tech/employee</span>
             </div>
-            <img src="/pitch/05-employee.png" alt="Employee credit identity and receipt-backed advance" loading="lazy" />
+            <div class="shot-img"><img src="/pitch/05-employee.png" alt="Employee credit identity and receipt-backed advance" loading="lazy" /></div>
             <div class="shot-cap"><span class="cap-k">EMPLOYEE</span> Credit tier + borrow against next payout.</div>
           </div>
 
@@ -987,7 +996,7 @@
               <span class="pf-dot" style="background:#28C840"></span>
               <span class="pf-url">/employer/history</span>
             </div>
-            <img src="/pitch/02-history.png" alt="On-chain transaction history" loading="lazy" />
+            <div class="shot-img"><img src="/pitch/02-history.png" alt="On-chain transaction history" loading="lazy" /></div>
             <div class="shot-cap"><span class="cap-k">HISTORY</span> Every payment, cycle, funding event &mdash; on-chain.</div>
           </div>
 
@@ -998,7 +1007,7 @@
               <span class="pf-dot" style="background:#28C840"></span>
               <span class="pf-url">/employer &middot; analytics</span>
             </div>
-            <img src="/pitch/03-analytics.png" alt="Payroll analytics charts" loading="lazy" />
+            <div class="shot-img"><img src="/pitch/03-analytics.png" alt="Payroll analytics charts" loading="lazy" /></div>
             <div class="shot-cap"><span class="cap-k">ANALYTICS</span> Volume, runway, and cost-per-employee at a glance.</div>
           </div>
 
@@ -1009,7 +1018,7 @@
               <span class="pf-dot" style="background:#28C840"></span>
               <span class="pf-url">/employer/create</span>
             </div>
-            <img src="/pitch/04-create.png" alt="Create new payroll" loading="lazy" />
+            <div class="shot-img"><img src="/pitch/04-create.png" alt="Create new payroll" loading="lazy" /></div>
             <div class="shot-cap"><span class="cap-k">CREATE</span> Templates &rarr; stream cadence in under a minute.</div>
           </div>
         </div>
