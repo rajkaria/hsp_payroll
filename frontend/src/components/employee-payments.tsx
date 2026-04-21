@@ -21,15 +21,24 @@ function useCyclePayments(payrollId: bigint, cycleNumber: bigint, address: strin
 
   return useMemo(() => {
     if (!data || !Array.isArray(data)) return [];
-    return (data as readonly (readonly [bigint, bigint, string, bigint, bigint, string])[])
-      .filter((r) => r[2].toLowerCase() === address.toLowerCase())
+    type Receipt = {
+      payrollId: bigint;
+      cycleNumber: bigint;
+      recipient: string;
+      amount: bigint;
+      timestamp: bigint;
+      hspRequestId: string;
+    };
+    const addr = address.toLowerCase();
+    return (data as readonly Receipt[])
+      .filter((r) => typeof r?.recipient === "string" && r.recipient.toLowerCase() === addr)
       .map((r) => ({
-        payrollId: r[0],
-        cycleNumber: r[1],
-        recipient: r[2],
-        amount: r[3],
-        timestamp: r[4],
-        hspRequestId: r[5],
+        payrollId: r.payrollId,
+        cycleNumber: r.cycleNumber,
+        recipient: r.recipient,
+        amount: r.amount,
+        timestamp: r.timestamp,
+        hspRequestId: r.hspRequestId,
       }));
   }, [data, address]);
 }
