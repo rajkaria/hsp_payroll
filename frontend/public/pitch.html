@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HashPay — The Income Protocol · Raj Karia</title>
+<meta name="description" content="HashPay is the income protocol for HashKey Chain — six composable on-chain primitives for payroll, reputation, credit, and yield.">
+<meta property="og:title" content="HashPay — The Income Protocol">
+<meta property="og:description" content="Democratizing payroll for crypto. Six composable primitives, native to HashKey Chain.">
+<meta property="og:url" content="https://pitch.hashpay.tech">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #0A0A0B;
+    --bg-elev:     #111114;
+    --bg-card:     rgba(255,255,255,0.03);
+    --bg-card-lit: rgba(124,123,247,0.05);
+    --border:      rgba(255,255,255,0.08);
+    --border-lit:  rgba(124,123,247,0.35);
+    --text:        #F5F5F7;
+    --text-dim:    #A1A1AA;
+    --text-mute:   #52525B;
+    --accent:      #7C7BF7;
+    --accent-hot:  #A78BFA;
+    --accent-glow: rgba(124,123,247,0.15);
+    --green:       #4ADE80;
+    --amber:       #FBBF24;
+    --red:         #F87171;
+    --pink:        #F472B6;
+    --cyan:        #22D3EE;
+    --font-sans:  'Inter', system-ui, sans-serif;
+    --font-mono:  'JetBrains Mono', ui-monospace, monospace;
+    --font-serif: 'Instrument Serif', Georgia, serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+  body { font-family: var(--font-sans); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+  /* --- viewport scaling wrapper --- */
+  .stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .frame {
+    width: 1600px;
+    height: 900px;
+    position: relative;
+    background: var(--bg);
+    flex-shrink: 0;
+    transform-origin: center center;
+  }
+
+  /* --- slide base --- */
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 56px 72px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .slide.active { display: flex; }
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 0%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 0%, transparent 80%);
+  }
+  .slide::after {
+    content: '';
+    position: absolute;
+    top: -30%; left: -10%;
+    width: 60%; height: 80%;
+    background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 60%);
+    pointer-events: none;
+    filter: blur(80px);
+    opacity: 0.5;
+  }
+
+  /* chrome + footer */
+  .chrome {
+    position: absolute;
+    top: 24px; left: 72px; right: 72px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-mute);
+    letter-spacing: 0.04em;
+    z-index: 10;
+  }
+  .chrome .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% {opacity: 1} 50% {opacity: 0.4} }
+
+  .footer {
+    position: absolute;
+    bottom: 24px; left: 72px; right: 72px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-mute);
+    z-index: 10;
+  }
+
+  .content {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 28px;
+    min-height: 0;
+  }
+
+  /* typography */
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .kicker::before { content: '// '; opacity: 0.5; }
+
+  h1, h2, h3, h4 { font-family: var(--font-sans); font-weight: 700; letter-spacing: -0.02em; line-height: 1.02; }
+  .display { font-size: 96px; font-weight: 800; letter-spacing: -0.045em; line-height: 0.96; }
+  .h1      { font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.02; }
+  .h2      { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+  .h3      { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  .lead    { font-size: 19px; color: var(--text-dim); line-height: 1.45; font-weight: 400; max-width: 1000px; }
+  .micro   { font-size: 12px; color: var(--text-mute); font-family: var(--font-mono); }
+
+  .accent { color: var(--accent-hot); }
+  .green  { color: var(--green); }
+  .mono   { font-family: var(--font-mono); }
+  .serif  { font-family: var(--font-serif); font-style: italic; font-weight: 400; }
+
+  /* ==========================================================================
+     SLIDE 1 — TITLE
+  ========================================================================== */
+  .s-title .content { justify-content: space-between; padding: 60px 0 24px; }
+  .s-title .logo-mark {
+    display: inline-flex; align-items: center; gap: 14px;
+    font-family: var(--font-mono); font-size: 14px; color: var(--text-dim);
+    margin-bottom: 48px; letter-spacing: 0.04em;
+  }
+  .s-title .logo-mark svg { width: 28px; height: 28px; }
+  .s-title h1 {
+    font-size: 128px; font-weight: 800; letter-spacing: -0.045em; line-height: 0.9;
+  }
+  .s-title .tagline {
+    margin-top: 24px;
+    font-size: 28px; color: var(--text-dim);
+    font-family: var(--font-serif); font-style: italic;
+    font-weight: 400; letter-spacing: -0.01em;
+  }
+  .s-title .presenter {
+    margin-top: 36px;
+    display: flex; align-items: center; gap: 16px;
+    font-family: var(--font-mono); font-size: 13px; color: var(--text-dim);
+  }
+  .s-title .presenter .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-sans); font-weight: 700; font-size: 14px;
+    color: var(--bg);
+  }
+  .s-title .presenter .name { color: var(--text); font-size: 15px; font-family: var(--font-sans); font-weight: 500; }
+  .s-title .presenter .role { color: var(--text-mute); }
+  .s-title .meta-row {
+    display: flex; gap: 40px; align-items: center;
+    padding-top: 24px; border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);
+  }
+  .s-title .meta-row strong { color: var(--text); font-weight: 500; }
+
+  /* ==========================================================================
+     SLIDE 2 — PROBLEM / MARKET
+  ========================================================================== */
+  .problem-hero { display: flex; flex-direction: column; gap: 18px; }
+  .problem-hero .h1 { font-size: 52px; max-width: 1300px; }
+
+  .market-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .market-stat {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px 22px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative; overflow: hidden;
+  }
+  .market-stat::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.6;
+  }
+  .market-stat .ms-label {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  .market-stat .ms-val {
+    font-size: 44px; font-weight: 800; color: var(--text);
+    letter-spacing: -0.035em; line-height: 1; font-feature-settings: "tnum";
+  }
+  .market-stat .ms-unit { font-size: 20px; color: var(--accent-hot); font-weight: 500; margin-left: 2px; }
+  .market-stat .ms-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; margin-top: 4px; }
+  .market-stat .ms-src { font-family: var(--font-mono); font-size: 10px; color: var(--text-mute); margin-top: auto; padding-top: 8px; border-top: 1px dashed var(--border); }
+
+  .democratize-banner {
+    margin-top: 14px;
+    padding: 22px 28px;
+    background: linear-gradient(90deg, var(--bg-card-lit), transparent);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .democratize-banner .db-label {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .democratize-banner .db-text {
+    font-size: 20px; color: var(--text); line-height: 1.35;
+    font-family: var(--font-serif); font-style: italic; font-weight: 400;
+  }
+
+  /* ==========================================================================
+     SLIDE 3 — PROTOCOL PRIMITIVES
+  ========================================================================== */
+  .primitives {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-top: 18px;
+  }
+  .primitive {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative; overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  .primitive::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .primitive .idx {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--accent); letter-spacing: 0.04em;
+  }
+  .primitive .name { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .primitive .sub {
+    font-family: var(--font-serif); font-style: italic; font-size: 13px;
+    color: var(--text-dim); margin-top: -2px;
+  }
+  .primitive .desc { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+  .primitive .contract {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-mute);
+    padding-top: 8px; border-top: 1px dashed var(--border); margin-top: auto;
+  }
+
+  /* ==========================================================================
+     SLIDE 4 — LIVE DEMO / PRODUCT SHOTS
+  ========================================================================== */
+  .product-frame {
+    background: linear-gradient(180deg, #14141A 0%, #0E0E12 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    font-size: 11px;
+  }
+  .pf-bar {
+    height: 28px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+  .pf-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pf-url {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-mute);
+    margin-left: 10px;
+  }
+
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 18px;
+    margin-top: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Employer dashboard mock */
+  .emp-dash { height: 100%; display: flex; flex-direction: column; }
+  .emp-dash-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .emp-head {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .emp-head .emp-title {
+    font-size: 13px; font-weight: 600; color: var(--text);
+  }
+  .emp-head .emp-chip {
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 3px 8px; border-radius: 999px;
+    background: rgba(74,222,128,0.12); color: var(--green);
+    border: 1px solid rgba(74,222,128,0.25);
+  }
+  .payroll-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .pc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .pc-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .pc-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-mute); margin-top: 2px; }
+  .pc-amt { font-family: var(--font-mono); font-size: 14px; color: var(--accent-hot); font-weight: 500; }
+  .pc-runway {
+    height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; position: relative;
+  }
+  .pc-runway-fill {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hot));
+    width: 72%;
+  }
+  .pc-btns { display: flex; gap: 6px; margin-top: 4px; }
+  .pc-btn {
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 5px 10px; border-radius: 6px;
+    background: rgba(124,123,247,0.15); color: var(--accent-hot);
+    border: 1px solid var(--border-lit);
+  }
+  .pc-btn.ghost {
+    background: transparent; color: var(--text-dim); border-color: var(--border);
+  }
+  .pc-runway-lbl {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 9px; color: var(--text-mute);
+  }
+
+  /* Right column stack */
+  .right-col { display: flex; flex-direction: column; gap: 14px; height: 100%; min-height: 0; }
+
+  /* Reputation card */
+  .rep-card {
+    background: linear-gradient(135deg, rgba(124,123,247,0.1), rgba(167,139,250,0.03));
+    border: 1px solid var(--border-lit);
+    border-radius: 10px; padding: 14px;
+    flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0;
+  }
+  .rep-head { display: flex; justify-content: space-between; align-items: center; }
+  .rep-title { font-size: 12px; font-weight: 600; color: var(--text); }
+  .rep-badge {
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 3px 8px; border-radius: 999px;
+    background: rgba(167,139,250,0.15); color: var(--accent-hot);
+    border: 1px solid var(--border-lit);
+  }
+  .rep-score {
+    font-size: 40px; font-weight: 800; color: var(--text);
+    letter-spacing: -0.03em; line-height: 1;
+    font-feature-settings: "tnum";
+  }
+  .rep-score .rs-unit { font-size: 16px; color: var(--accent-hot); font-weight: 500; }
+  .rep-rows { display: flex; flex-direction: column; gap: 5px; }
+  .rep-row {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 3px 0;
+  }
+  .rep-row .k { color: var(--text-mute); }
+  .rep-row .v { color: var(--text); font-weight: 500; }
+
+  /* Advance card */
+  .adv-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .adv-head { display: flex; justify-content: space-between; align-items: center; }
+  .adv-title { font-size: 12px; font-weight: 600; color: var(--text); }
+  .adv-tier {
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 2px 7px; border-radius: 4px;
+    background: rgba(74,222,128,0.1); color: var(--green);
+  }
+  .adv-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-mute);
+  }
+  .adv-row .av { color: var(--text); }
+  .adv-available {
+    margin-top: 4px; padding: 10px;
+    background: rgba(124,123,247,0.08);
+    border-radius: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .adv-available .lbl { font-size: 10px; color: var(--text-dim); font-family: var(--font-mono); }
+  .adv-available .val { font-size: 16px; color: var(--accent-hot); font-weight: 700; }
+
+  .demo-cta {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    background: rgba(124,123,247,0.06);
+    border: 1px solid var(--border-lit);
+    border-radius: 10px;
+  }
+  .demo-cta .cta-lbl {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .demo-cta .cta-txt {
+    font-family: var(--font-serif); font-style: italic;
+    font-size: 18px; color: var(--text);
+  }
+
+  /* ==========================================================================
+     SLIDE 5 — COMPETITIVE ADVANTAGE
+  ========================================================================== */
+  .adv-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 18px;
+  }
+  .adv-cell {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .adv-cell.highlight {
+    background: linear-gradient(135deg, rgba(124,123,247,0.12), rgba(167,139,250,0.04));
+    border-color: var(--border-lit);
+  }
+  .adv-cell .ac-num {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); letter-spacing: 0.08em;
+  }
+  .adv-cell .ac-title {
+    font-size: 22px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.02em; line-height: 1.15;
+  }
+  .adv-cell .ac-desc {
+    font-size: 13.5px; color: var(--text-dim); line-height: 1.5;
+  }
+  .adv-cell .ac-proof {
+    margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--border);
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-mute);
+  }
+  .adv-cell .ac-proof strong { color: var(--accent-hot); font-weight: 500; }
+
+  /* ==========================================================================
+     SLIDE 6 — COMPETITIVE LANDSCAPE (2x2 MATRIX)
+  ========================================================================== */
+  .landscape-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 28px;
+    margin-top: 18px;
+    flex: 1;
+    min-height: 0;
+  }
+  .landscape-left { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+  .landscape-left h2 { margin-bottom: 4px; }
+  .legend-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+  .legend-row {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .legend-row .lr-name { color: var(--text); font-weight: 500; min-width: 80px; }
+  .legend-row .lr-sub { color: var(--text-mute); font-family: var(--font-mono); font-size: 11px; }
+
+  .matrix {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 1/1;
+    max-height: 560px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .matrix svg { display: block; width: 100%; height: 100%; }
+
+  /* ==========================================================================
+     SLIDE 7 — ECOSYSTEM IMPACT
+  ========================================================================== */
+  .eco-hero .h1 { font-size: 54px; max-width: 1200px; }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-top: 14px;
+  }
+  .stat {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 26px 24px;
+    position: relative; overflow: hidden;
+  }
+  .stat .stat-label {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.12em;
+    margin-bottom: 12px;
+  }
+  .stat .stat-value {
+    font-size: 52px; font-weight: 800; color: var(--text);
+    letter-spacing: -0.04em; line-height: 1; font-feature-settings: "tnum";
+  }
+  .stat .stat-unit { font-size: 20px; color: var(--accent-hot); font-weight: 500; margin-left: 4px; }
+  .stat .stat-desc { margin-top: 12px; font-size: 13px; color: var(--text-dim); line-height: 1.45; }
+
+  .eco-points {
+    display: flex; flex-direction: column; gap: 0;
+    margin-top: 14px;
+  }
+  .ep-row {
+    display: grid; grid-template-columns: 130px 1fr; gap: 20px;
+    align-items: start; padding: 11px 0;
+    border-top: 1px solid var(--border);
+  }
+  .ep-row:last-child { border-bottom: 1px solid var(--border); }
+  .ep-row .ep-label {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;
+    padding-top: 3px;
+  }
+  .ep-row .ep-text { font-size: 15px; color: var(--text); line-height: 1.45; }
+  .ep-row .ep-dim { color: var(--text-dim); }
+
+  /* ==========================================================================
+     SLIDE 8 — ROADMAP
+  ========================================================================== */
+  .roadmap {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .phase {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    display: flex; flex-direction: column; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .phase.now { border-color: var(--border-lit); background: var(--bg-card-lit); }
+  .phase .ph-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .phase .ph-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .phase .ph-time {
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 3px 7px; border-radius: 4px;
+    background: rgba(124,123,247,0.1);
+  }
+  .phase ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .phase li {
+    font-size: 12.5px; color: var(--text-dim); line-height: 1.4;
+    padding-left: 14px; position: relative;
+  }
+  .phase li::before {
+    content: '→'; position: absolute; left: 0;
+    color: var(--accent); font-family: var(--font-mono);
+  }
+  .phase li strong { color: var(--text); font-weight: 500; }
+
+  /* ==========================================================================
+     SLIDE 9 — FOUNDER CTA + QR
+  ========================================================================== */
+  .cta-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 48px;
+    align-items: center;
+    margin-top: 20px;
+    min-height: 0;
+  }
+  .cta-left { display: flex; flex-direction: column; gap: 22px; }
+  .cta-left .display { font-size: 82px; line-height: 0.96; }
+  .cta-left .cta-lead {
+    font-size: 20px; color: var(--text-dim); line-height: 1.5; max-width: 640px;
+  }
+
+  .cta-checks {
+    margin-top: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .cta-check {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 14px; color: var(--text);
+  }
+  .cta-check .ck {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: rgba(74,222,128,0.12);
+    border: 1px solid rgba(74,222,128,0.35);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--green); font-family: var(--font-mono); font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .cta-right {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    padding: 28px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-lit);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-right::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--accent-glow), transparent 60%);
+    pointer-events: none;
+  }
+  .cta-right .cr-label {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase;
+    z-index: 2;
+  }
+  .cta-right .qr {
+    width: 220px; height: 220px; border-radius: 10px;
+    z-index: 2;
+    display: block;
+  }
+  .cta-right .cr-handle {
+    font-family: var(--font-mono); font-size: 15px;
+    color: var(--text); font-weight: 500;
+    z-index: 2;
+  }
+  .cta-right .cr-name {
+    font-size: 13px; color: var(--text-dim);
+    font-family: var(--font-serif); font-style: italic;
+    z-index: 2;
+  }
+
+  .final-links {
+    margin-top: auto;
+    display: flex; gap: 24px; flex-wrap: wrap;
+    padding-top: 20px; border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);
+  }
+  .final-links span strong { color: var(--text); font-weight: 500; margin-right: 6px; }
+
+  /* ==========================================================================
+     NAVIGATION CONTROLS
+  ========================================================================== */
+  .nav-ui {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(10,10,11,0.85);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+  }
+  .nav-btn {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-dim); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; transition: all 0.15s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent-hot); }
+  .nav-counter { padding: 0 10px; color: var(--text); font-weight: 500; }
+  .nav-hint { padding-left: 8px; border-left: 1px solid var(--border); color: var(--text-mute); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="frame" id="frame">
+
+    <!-- ======================================================================
+         SLIDE 1 — TITLE
+    ====================================================================== -->
+    <div class="slide s-title active" data-slide="1">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HSP · LIVE ON HASHKEY CHAIN</span></div>
+        <div>hashpay.tech</div>
+      </div>
+
+      <div class="content">
+        <div>
+          <div class="logo-mark">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="28" height="28" rx="6" stroke="#7C7BF7" stroke-width="1.5"/>
+              <path d="M10 10V22M22 10V22M10 16H22" stroke="#7C7BF7" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="16" cy="16" r="2" fill="#A78BFA"/>
+            </svg>
+            <span>HASHPAY</span>
+          </div>
+
+          <h1>The Income<br>Protocol.</h1>
+
+          <p class="tagline">
+            Democratizing payroll for crypto.<br>
+            Six composable primitives, native to HashKey Chain.
+          </p>
+
+          <div class="presenter">
+            <div class="avatar">RK</div>
+            <div>
+              <div class="name">Raj Karia</div>
+              <div class="role">Founder &middot; HashPay</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="meta-row">
+          <span><strong>Tech Demo</strong></span>
+          <span>HashKey Chain Hackathon</span>
+          <span style="color: var(--text-mute);">~ 7 min</span>
+          <span style="margin-left: auto; color: var(--green);">&bull; live on mainnet-testnet</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>01 / 09</span>
+        <span>hashpay.tech/protocol</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 2 — MARKET / PROBLEM
+    ====================================================================== -->
+    <div class="slide" data-slide="2">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / MARKET</span></div>
+        <div>01</div>
+      </div>
+
+      <div class="content">
+        <div class="problem-hero">
+          <div class="kicker">the market waiting to be served</div>
+          <h2 class="h1">Crypto has <em class="serif">millions</em> of workers.<br>Zero native payroll rails.</h2>
+        </div>
+
+        <div class="market-grid">
+          <div class="market-stat">
+            <div class="ms-label">Crypto companies</div>
+            <div class="ms-val">59K<span class="ms-unit">+</span></div>
+            <div class="ms-desc">Active crypto &amp; Web3 companies globally. 5,830 are venture-backed startups.</div>
+            <div class="ms-src">StartUs Insights, 2025</div>
+          </div>
+          <div class="market-stat">
+            <div class="ms-label">Workforce to pay</div>
+            <div class="ms-val">1.9M<span class="ms-unit">+</span></div>
+            <div class="ms-desc">People employed by crypto companies worldwide. 228K new jobs added last year.</div>
+            <div class="ms-src">Grand View Research, 2025</div>
+          </div>
+          <div class="market-stat">
+            <div class="ms-label">DAO contributors</div>
+            <div class="ms-val">13K<span class="ms-unit"> DAOs</span></div>
+            <div class="ms-desc">Active DAOs paying contributors. $30B+ in treasuries. 5.1M governance holders.</div>
+            <div class="ms-src">DAO Tools Report, 2025</div>
+          </div>
+          <div class="market-stat">
+            <div class="ms-label">Monthly payroll spend</div>
+            <div class="ms-val">$9.5B<span class="ms-unit">/mo</span></div>
+            <div class="ms-desc">Est. monthly crypto salary volume. <span style="color: var(--text);">$114B annually.</span> None of it is native to HashKey.</div>
+            <div class="ms-src">Derived: 1.9M &times; $5K avg</div>
+          </div>
+        </div>
+
+        <div class="democratize-banner">
+          <div class="db-label">the mission</div>
+          <div class="db-text">
+            Payroll should not be a privilege reserved for teams big enough to hire a CFO.<br>
+            <span style="color: var(--accent-hot);">HashPay democratizes payroll</span> &mdash; one-click, on-chain, for any team, on HashKey.
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>02 / 09</span>
+        <span class="mono">// today: spreadsheets + 47 MetaMask confirmations &middot; tomorrow: one click</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 3 — PROTOCOL
+    ====================================================================== -->
+    <div class="slide" data-slide="3">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / PROTOCOL</span></div>
+        <div>02</div>
+      </div>
+
+      <div class="content">
+        <div class="kicker">what we built</div>
+        <h2 class="h1">Not a product.<br><span class="accent">A protocol.</span></h2>
+        <p class="lead">Six composable on-chain primitives. Every read is permissionless. Anyone &mdash; any team, any protocol, any chain &mdash; can compose on top.</p>
+
+        <div class="primitives">
+          <div class="primitive">
+            <span class="idx">01 &middot; how money flows</span>
+            <span class="name">Cadence</span>
+            <span class="sub">recipient&rsquo;s choice</span>
+            <span class="desc">Batch, stream, pull, or hybrid split. One payroll, every cadence.</span>
+            <span class="contract">AdaptiveCadence.sol</span>
+          </div>
+          <div class="primitive">
+            <span class="idx">02 &middot; what idle money does</span>
+            <span class="name">Yield</span>
+            <span class="sub">runway extends itself</span>
+            <span class="desc">ERC-4626 auto-deposit. 6-month runway becomes 7.2 months. Zero ops change.</span>
+            <span class="contract">YieldEscrow.sol</span>
+          </div>
+          <div class="primitive">
+            <span class="idx">03 &middot; what receipts compose into</span>
+            <span class="name">Reputation</span>
+            <span class="sub">proof-of-income, permissionless</span>
+            <span class="desc">Every attestation aggregates. Chainlink-compatible oracle. Any protocol reads it.</span>
+            <span class="contract">ReputationRegistry.sol</span>
+          </div>
+          <div class="primitive">
+            <span class="idx">04 &middot; receipt-backed credit</span>
+            <span class="name">Advances</span>
+            <span class="sub">the PayFi loop, closed</span>
+            <span class="desc">Borrow up to 70% of next payout. Reputation-tiered APR. Auto-repaid on cycle execute.</span>
+            <span class="contract">PayrollAdvance.sol</span>
+          </div>
+          <div class="primitive">
+            <span class="idx">05 &middot; pluggable gating</span>
+            <span class="name">Compliance</span>
+            <span class="sub">as composition, not code</span>
+            <span class="desc">KYC, jurisdiction, sanctions, rate limits, timelocks. Configurable per-payroll.</span>
+            <span class="contract">ComplianceHookRegistry.sol</span>
+          </div>
+          <div class="primitive">
+            <span class="idx">06 &middot; fiat-denominated pay</span>
+            <span class="name">Salary Index</span>
+            <span class="sub">built for emerging markets</span>
+            <span class="desc">Quote in INR, USD, EUR. Chainlink oracle resolves to tokens at execute time.</span>
+            <span class="contract">SalaryIndex.sol</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>03 / 09</span>
+        <span class="mono">// every read function, public by default</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 4 — LIVE DEMO (stylized product screenshots)
+    ====================================================================== -->
+    <div class="slide" data-slide="4">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / PRODUCT</span></div>
+        <div>03</div>
+      </div>
+
+      <div class="content">
+        <div class="kicker">&#x25B6; live on hashkey chain</div>
+        <h2 class="h1">Two tabs. <span class="accent">One cycle.</span> Ninety seconds.</h2>
+        <p class="lead">Here&rsquo;s what a HashPay cycle looks like end-to-end &mdash; from funded escrow to recipient borrowing against their next paycheck.</p>
+
+        <div class="demo-grid">
+          <!-- LEFT: Employer dashboard -->
+          <div class="product-frame emp-dash">
+            <div class="pf-bar">
+              <span class="pf-dot" style="background:#FF5F57"></span>
+              <span class="pf-dot" style="background:#FEBC2E"></span>
+              <span class="pf-dot" style="background:#28C840"></span>
+              <span class="pf-url">hashpay.tech/employer</span>
+            </div>
+            <div class="emp-dash-body">
+              <div class="emp-head">
+                <div>
+                  <div class="emp-title">Employer Dashboard</div>
+                  <div class="pc-meta" style="margin-top:2px;">0x7a4B&hellip;E2f1 &middot; HashKey Chain</div>
+                </div>
+                <span class="emp-chip">&#9679; 3 ACTIVE</span>
+              </div>
+
+              <div class="payroll-card" style="border-color: var(--border-lit); background: var(--bg-card-lit);">
+                <div class="pc-top">
+                  <div>
+                    <div class="pc-name">Engineering Team &middot; Monthly</div>
+                    <div class="pc-meta">5 recipients &middot; Cycle #6 &middot; Due in 0h 02m</div>
+                  </div>
+                  <div class="pc-amt">$24,500 <span style="color:var(--text-mute);font-size:10px;">/cycle</span></div>
+                </div>
+                <div class="pc-runway-lbl">
+                  <span>Runway: 8.4 cycles</span><span>+0.8 from yield @ 4.5% APY</span>
+                </div>
+                <div class="pc-runway"><div class="pc-runway-fill"></div></div>
+                <div class="pc-btns">
+                  <span class="pc-btn">&rarr; EXECUTE CYCLE</span>
+                  <span class="pc-btn ghost">attest</span>
+                  <span class="pc-btn ghost">report</span>
+                </div>
+              </div>
+
+              <div class="payroll-card">
+                <div class="pc-top">
+                  <div>
+                    <div class="pc-name">Contractors &middot; Weekly</div>
+                    <div class="pc-meta">8 recipients &middot; Cycle #24</div>
+                  </div>
+                  <div class="pc-amt">$6,200</div>
+                </div>
+                <div class="pc-runway"><div class="pc-runway-fill" style="width: 92%; background: linear-gradient(90deg, var(--green), var(--accent));"></div></div>
+              </div>
+
+              <div class="payroll-card">
+                <div class="pc-top">
+                  <div>
+                    <div class="pc-name">Design Team &middot; Biweekly</div>
+                    <div class="pc-meta">3 recipients &middot; INR-denominated</div>
+                  </div>
+                  <div class="pc-amt">&#8377;2.4L</div>
+                </div>
+                <div class="pc-runway"><div class="pc-runway-fill" style="width: 58%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Reputation + Advance -->
+          <div class="right-col">
+            <div class="product-frame rep-card">
+              <div class="pf-bar" style="margin: -14px -14px 0; border-radius: 9px 9px 0 0;">
+                <span class="pf-dot" style="background:#FF5F57"></span>
+                <span class="pf-dot" style="background:#FEBC2E"></span>
+                <span class="pf-dot" style="background:#28C840"></span>
+                <span class="pf-url">hashpay.tech/employee &middot; reputation</span>
+              </div>
+              <div style="padding-top: 8px;">
+                <div class="rep-head">
+                  <div class="rep-title">On-chain Proof-of-Income</div>
+                  <span class="rep-badge">TIER 1 &middot; 70% LTV</span>
+                </div>
+              </div>
+              <div class="rep-score">$24,100<span class="rs-unit"> /90d</span></div>
+              <div class="rep-rows">
+                <div class="rep-row"><span class="k">ON-TIME RATE</span><span class="v" style="color:var(--green);">96.2%</span></div>
+                <div class="rep-row"><span class="k">UNIQUE EMPLOYERS</span><span class="v">3</span></div>
+                <div class="rep-row"><span class="k">LIFETIME RECEIVED</span><span class="v">$47,200</span></div>
+                <div class="rep-row"><span class="k">ATTESTATIONS</span><span class="v">18</span></div>
+                <div class="rep-row"><span class="k">FIRST PAYMENT</span><span class="v">214 days ago</span></div>
+              </div>
+            </div>
+
+            <div class="product-frame adv-card">
+              <div class="adv-head">
+                <div class="adv-title">Next Payout Advance</div>
+                <span class="adv-tier">ELIGIBLE</span>
+              </div>
+              <div class="adv-row"><span>NEXT PAYOUT</span><span class="av">$4,900 in 28 days</span></div>
+              <div class="adv-row"><span>INTEREST</span><span class="av">1% / cycle</span></div>
+              <div class="adv-available">
+                <div class="lbl">BORROW NOW</div>
+                <div class="val">up to $3,430</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-cta">
+          <span class="cta-lbl">next up</span>
+          <span class="cta-txt">switching to the live product &mdash; execute a cycle, show the block explorer, trigger the advance&hellip;</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>04 / 09</span>
+        <span class="mono">// ~2s settlement &middot; ~$0.01 gas &middot; 100% on-chain</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 5 — COMPETITIVE ADVANTAGE
+    ====================================================================== -->
+    <div class="slide" data-slide="5">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / ADVANTAGE</span></div>
+        <div>04</div>
+      </div>
+
+      <div class="content">
+        <div class="kicker">why hashpay wins</div>
+        <h2 class="h1">Everyone else built a <em class="serif">payment</em>.<br>We built the <span class="accent">entire income stack.</span></h2>
+
+        <div class="adv-grid">
+          <div class="adv-cell highlight">
+            <span class="ac-num">01</span>
+            <div class="ac-title">Protocol, not product</div>
+            <div class="ac-desc">Six composable primitives. Anyone can build on top &mdash; credit markets, reputation oracles, auto-investors. Zebec and Sablier are apps. We&rsquo;re the stack underneath.</div>
+            <div class="ac-proof">// 6 contracts shipped &middot; <strong>all reads permissionless</strong></div>
+          </div>
+
+          <div class="adv-cell highlight">
+            <span class="ac-num">02</span>
+            <div class="ac-title">The credit loop, closed</div>
+            <div class="ac-desc">Income &rarr; Reputation &rarr; Credit &rarr; Settlement. A worker with 6 months of HashPay history can borrow against their next paycheck. <strong style="color:var(--text);">Nobody else has shipped this.</strong></div>
+            <div class="ac-proof">// reputation-tiered LTV &middot; <strong>30/50/70%</strong></div>
+          </div>
+
+          <div class="adv-cell highlight">
+            <span class="ac-num">03</span>
+            <div class="ac-title">Native to HashKey</div>
+            <div class="ac-desc">Zebec is Solana-first. Sablier is Ethereum-first. Franklin is US-first. HashPay is HashKey-first &mdash; purpose-built for the compliance-first chain. <strong style="color:var(--text);">The PayFi slot is open.</strong></div>
+            <div class="ac-proof">// live on HSK chain &middot; <strong>HSP settlement native</strong></div>
+          </div>
+
+          <div class="adv-cell">
+            <span class="ac-num">04</span>
+            <div class="ac-title">Compliance as composition</div>
+            <div class="ac-desc">KYC SBT, jurisdiction, sanctions, timelocks &mdash; pluggable hooks, configurable per-payroll. The only payroll protocol that operates inside a licensed-entity framework.</div>
+            <div class="ac-proof">// max 5 hooks per payroll &middot; <strong>hot-swappable</strong></div>
+          </div>
+
+          <div class="adv-cell">
+            <span class="ac-num">05</span>
+            <div class="ac-title">Emerging-market first</div>
+            <div class="ac-desc">Salary Index denominates pay in INR, USD, EUR. Oracle resolves at execute time. Built where the workers actually are &mdash; India, SEA, LATAM.</div>
+            <div class="ac-proof">// Chainlink oracle &middot; <strong>any fiat pair</strong></div>
+          </div>
+
+          <div class="adv-cell">
+            <span class="ac-num">06</span>
+            <div class="ac-title">Yield that compounds the chain</div>
+            <div class="ac-desc">Idle escrow auto-deposits into HashKey ERC-4626 vaults. Every employer becomes a passive LP. <strong style="color:var(--text);">Payroll becomes DeFi top-of-funnel.</strong></div>
+            <div class="ac-proof">// +20% runway extension at 4.5% APY</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>05 / 09</span>
+        <span class="mono">// six moats. one protocol. zero competitors on HashKey.</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 6 — COMPETITIVE LANDSCAPE (GRAPH)
+    ====================================================================== -->
+    <div class="slide" data-slide="6">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / LANDSCAPE</span></div>
+        <div>05</div>
+      </div>
+
+      <div class="content">
+        <div class="kicker">the positioning</div>
+        <h2 class="h1">Nobody is where we are.</h2>
+
+        <div class="landscape-wrap">
+          <div class="landscape-left">
+            <p class="lead" style="font-size: 17px;">
+              Payroll streaming is crowded. Income <em class="serif">protocols</em> &mdash; ones that compose reputation, credit, yield, and compliance &mdash; have no incumbent.
+            </p>
+
+            <div class="legend-list">
+              <div class="legend-row">
+                <span class="legend-dot" style="background: var(--accent-hot); box-shadow: 0 0 12px var(--accent-hot);"></span>
+                <span class="lr-name">HashPay</span>
+                <span class="lr-sub">HashKey &middot; 6 primitives</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #9945FF;"></span>
+                <span class="lr-name">Zebec</span>
+                <span class="lr-sub">Solana &middot; streaming + cards</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #F472B6;"></span>
+                <span class="lr-name">Sablier</span>
+                <span class="lr-sub">28 chains &middot; vesting + flow</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #22D3EE;"></span>
+                <span class="lr-name">Superfluid</span>
+                <span class="lr-sub">10 chains &middot; super tokens</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #FBBF24;"></span>
+                <span class="lr-name">Franklin</span>
+                <span class="lr-sub">ETH/Polygon &middot; hybrid payroll</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: var(--text-mute);"></span>
+                <span class="lr-name">Request</span>
+                <span class="lr-sub">ETH &middot; invoicing + payroll</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="matrix">
+            <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="hpGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.6"/>
+                  <stop offset="60%" stop-color="#7C7BF7" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#7C7BF7" stop-opacity="0"/>
+                </radialGradient>
+                <pattern id="gridPattern" width="25" height="25" patternUnits="userSpaceOnUse">
+                  <path d="M 25 0 L 0 0 0 25" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                </pattern>
+              </defs>
+
+              <!-- grid -->
+              <rect width="500" height="500" fill="url(#gridPattern)"/>
+
+              <!-- axes -->
+              <line x1="250" y1="20" x2="250" y2="480" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <line x1="20" y1="250" x2="480" y2="250" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+              <!-- quadrant labels (subtle) -->
+              <text x="470" y="35" fill="#52525B" font-family="JetBrains Mono" font-size="9" text-anchor="end" letter-spacing="1">PROTOCOL STACK</text>
+              <text x="30" y="35" fill="#52525B" font-family="JetBrains Mono" font-size="9" text-anchor="start" letter-spacing="1">SINGLE-PRIMITIVE</text>
+              <text x="30" y="475" fill="#52525B" font-family="JetBrains Mono" font-size="9" text-anchor="start" letter-spacing="1">GENERIC CHAIN</text>
+              <text x="470" y="475" fill="#52525B" font-family="JetBrains Mono" font-size="9" text-anchor="end" letter-spacing="1">HASHKEY-NATIVE</text>
+
+              <!-- axis labels -->
+              <text x="250" y="497" fill="#A1A1AA" font-family="JetBrains Mono" font-size="10" text-anchor="middle" letter-spacing="1.5">HASHKEY ALIGNMENT &rarr;</text>
+              <text x="10" y="250" fill="#A1A1AA" font-family="JetBrains Mono" font-size="10" text-anchor="middle" letter-spacing="1.5" transform="rotate(-90 10 250)">PROTOCOL DEPTH &rarr;</text>
+
+              <!-- HashPay sweet spot zone -->
+              <circle cx="400" cy="95" r="85" fill="url(#hpGlow)"/>
+
+              <!-- competitors (dots) -->
+              <!-- Zebec: deep product, wrong chain -->
+              <circle cx="140" cy="150" r="18" fill="#9945FF" opacity="0.25"/>
+              <circle cx="140" cy="150" r="9" fill="#9945FF"/>
+              <text x="140" y="130" fill="#F5F5F7" font-family="Inter" font-size="13" font-weight="600" text-anchor="middle">Zebec</text>
+              <text x="140" y="175" fill="#A1A1AA" font-family="JetBrains Mono" font-size="9" text-anchor="middle">Solana</text>
+
+              <!-- Sablier: single primitive, multi-chain -->
+              <circle cx="90" cy="210" r="16" fill="#F472B6" opacity="0.25"/>
+              <circle cx="90" cy="210" r="8" fill="#F472B6"/>
+              <text x="90" y="192" fill="#F5F5F7" font-family="Inter" font-size="13" font-weight="600" text-anchor="middle">Sablier</text>
+              <text x="90" y="232" fill="#A1A1AA" font-family="JetBrains Mono" font-size="9" text-anchor="middle">28 chains</text>
+
+              <!-- Superfluid -->
+              <circle cx="70" cy="320" r="13" fill="#22D3EE" opacity="0.25"/>
+              <circle cx="70" cy="320" r="6.5" fill="#22D3EE"/>
+              <text x="70" y="302" fill="#F5F5F7" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle">Superfluid</text>
+
+              <!-- Franklin -->
+              <circle cx="210" cy="370" r="12" fill="#FBBF24" opacity="0.25"/>
+              <circle cx="210" cy="370" r="6" fill="#FBBF24"/>
+              <text x="210" y="352" fill="#F5F5F7" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle">Franklin</text>
+
+              <!-- Request -->
+              <circle cx="150" cy="420" r="10" fill="#71717A" opacity="0.25"/>
+              <circle cx="150" cy="420" r="5" fill="#71717A"/>
+              <text x="150" y="405" fill="#A1A1AA" font-family="Inter" font-size="11" font-weight="500" text-anchor="middle">Request</text>
+
+              <!-- HashPay (big, glowing, top-right) -->
+              <circle cx="400" cy="95" r="32" fill="#A78BFA" opacity="0.3"/>
+              <circle cx="400" cy="95" r="18" fill="#A78BFA"/>
+              <circle cx="400" cy="95" r="6" fill="#F5F5F7"/>
+              <text x="400" y="48" fill="#F5F5F7" font-family="Inter" font-size="17" font-weight="800" text-anchor="middle" letter-spacing="-0.5">HashPay</text>
+              <text x="400" y="67" fill="#A78BFA" font-family="JetBrains Mono" font-size="10" text-anchor="middle" letter-spacing="1">HSK &middot; 6 PRIMITIVES</text>
+
+              <!-- marker line pointing to open territory -->
+              <text x="485" y="95" fill="#7C7BF7" font-family="JetBrains Mono" font-size="10" text-anchor="end" letter-spacing="1" opacity="0.7">&larr; open territory</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>06 / 09</span>
+        <span class="mono">// three teams raised $50M+ building this on the wrong chains.</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 7 — ECOSYSTEM IMPACT
+    ====================================================================== -->
+    <div class="slide" data-slide="7">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / ECOSYSTEM</span></div>
+        <div>06</div>
+      </div>
+
+      <div class="content">
+        <div class="kicker">why hashkey wins when hashpay wins</div>
+        <div class="eco-hero">
+          <h2 class="h1">The fastest path to <em class="serif">quality users</em><br>and <span class="accent">sticky TVL</span> on HashKey Chain.</h2>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">Recurring settlement volume</div>
+            <div class="stat-value">$60M<span class="stat-unit">/yr</span></div>
+            <div class="stat-desc">Just 100 teams at $50K/mo avg. Not speculative TVL &mdash; <strong style="color:var(--text);">sticky, predictable settlement</strong> that shows up every month.</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">On-chain actions per month</div>
+            <div class="stat-value">25K<span class="stat-unit">+</span></div>
+            <div class="stat-desc">1 HSP receipt + N attestations + N reputation updates per cycle. <strong style="color:var(--text);">Real transactions. Real gas.</strong></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Every idle dollar &rarr; DeFi</div>
+            <div class="stat-value">100%<span class="stat-unit"> LP</span></div>
+            <div class="stat-desc">Escrow auto-deposits into HashKey ERC-4626 vaults. <strong style="color:var(--text);">Every employer becomes a passive LP.</strong></div>
+          </div>
+        </div>
+
+        <div class="eco-points">
+          <div class="ep-row">
+            <div class="ep-label">Quality users</div>
+            <div class="ep-text">Crypto teams + their 1.9M workers <strong>arrive for payroll and stay for DeFi</strong>. <span class="ep-dim">Every contributor becomes a wallet on HashKey &mdash; that&rsquo;s the acquisition channel.</span></div>
+          </div>
+          <div class="ep-row">
+            <div class="ep-label">Deep moat</div>
+            <div class="ep-text">A worker with 6 months of income history <strong>doesn&rsquo;t switch chains</strong>. <span class="ep-dim">The chain that owns income verification owns the worker. HashKey should be that chain.</span></div>
+          </div>
+          <div class="ep-row">
+            <div class="ep-label">PayFi pillar</div>
+            <div class="ep-text">HashKey&rsquo;s four stated focus areas: BTCFi, RWA, stablecoins, <strong>PayFi</strong>. <span class="ep-dim">HashPay is the flagship PayFi protocol &mdash; native, not retrofitted.</span></div>
+          </div>
+          <div class="ep-row">
+            <div class="ep-label">Compliance fit</div>
+            <div class="ep-text">KYC SBT, jurisdiction gating, sanctions, timelocks <strong>shipped today</strong>. <span class="ep-dim">The only payroll protocol that operates inside a licensed-entity framework.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>07 / 09</span>
+        <span class="mono">// HashKey Chain DeFi TVL today: ~$1.96M. this is a step-function, not a bump.</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 8 — ROADMAP (4 phases, tight timelines)
+    ====================================================================== -->
+    <div class="slide" data-slide="8">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / ROADMAP</span></div>
+        <div>07</div>
+      </div>
+
+      <div class="content">
+        <div class="kicker">what ships next</div>
+        <h2 class="h1">Every primitive is <em class="serif">already deployed</em>.<br>We ship in <span class="accent">weeks</span>, not quarters.</h2>
+
+        <div class="roadmap">
+          <div class="phase now">
+            <div class="ph-head">
+              <span class="ph-name">Now</span>
+              <span class="ph-time">30 days</span>
+            </div>
+            <ul>
+              <li><strong>HSP mainnet</strong> out of sandbox</li>
+              <li><strong>First 10 pilot teams</strong> live on HashKey</li>
+              <li><strong>HBTC</strong> denominated payroll (BTCFi alignment)</li>
+              <li>Audit kickoff (Zellic/ToB)</li>
+            </ul>
+          </div>
+          <div class="phase">
+            <div class="ph-head">
+              <span class="ph-name">Q3 2026</span>
+              <span class="ph-time">60 days</span>
+            </div>
+            <ul>
+              <li><strong>Reputation oracle</strong> consumed by first lending protocol</li>
+              <li><strong>Employer credit lines</strong> against escrow</li>
+              <li><strong>Mobile wallet</strong> &mdash; OKX, Trust Wallet</li>
+              <li>100 teams, $1M monthly volume</li>
+            </ul>
+          </div>
+          <div class="phase">
+            <div class="ph-head">
+              <span class="ph-name">Q4 2026</span>
+              <span class="ph-time">90 days</span>
+            </div>
+            <ul>
+              <li><strong>Cross-border remittance</strong> rail (INR/USD/PHP)</li>
+              <li><strong>Auto-invest paychecks</strong> into RWA vaults</li>
+              <li><strong>Reputation NFTs</strong> portable across chains</li>
+              <li>1,000 teams, $10M+ monthly</li>
+            </ul>
+          </div>
+          <div class="phase">
+            <div class="ph-head">
+              <span class="ph-name">2027</span>
+              <span class="ph-time">vision</span>
+            </div>
+            <ul>
+              <li><strong>Undercollateralized credit</strong> markets on HSK</li>
+              <li><strong>Payroll-as-top-of-funnel</strong> for every HSK protocol</li>
+              <li><strong>Enterprise tier</strong> &mdash; Fortune 500 Web3 subsidiaries</li>
+              <li>10,000 teams, $100M+ monthly volume</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>08 / 09</span>
+        <span class="mono">// contracts live &middot; we just need the runway to ship distribution.</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         SLIDE 9 — FOUNDER CTA + QR
+    ====================================================================== -->
+    <div class="slide" data-slide="9">
+      <div class="chrome">
+        <div class="brand"><span class="dot"></span><span>HASHPAY / THE ASK</span></div>
+        <div>08</div>
+      </div>
+
+      <div class="content">
+        <div class="kicker">if you&rsquo;re running a crypto team</div>
+
+        <div class="cta-wrap">
+          <div class="cta-left">
+            <h1 class="display">
+              Stop paying<br>your team<br>the <em class="serif">hard way.</em>
+            </h1>
+            <p class="cta-lead">
+              If you&rsquo;re a founder, CEO, DAO lead, or ops chief running a crypto team &mdash; come talk to me. Your team&rsquo;s <strong style="color:var(--text);">first payroll cycle on HashPay is on us.</strong>
+            </p>
+
+            <div class="cta-checks">
+              <div class="cta-check"><span class="ck">&check;</span>Set up a payroll in under 2 minutes</div>
+              <div class="cta-check"><span class="ck">&check;</span>2-second settlement, $0.01 gas, fully on-chain</div>
+              <div class="cta-check"><span class="ck">&check;</span>Every payment builds your team&rsquo;s on-chain credit history</div>
+              <div class="cta-check"><span class="ck">&check;</span>Compliance hooks ready for your jurisdiction</div>
+            </div>
+          </div>
+
+          <div class="cta-right">
+            <div class="cr-label">scan to chat</div>
+            <img class="qr" alt="Telegram QR: t.me/rajkaria" src="data:image/png;base64,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"/>
+            <div class="cr-handle">t.me/rajkaria</div>
+            <div class="cr-name">Raj Karia &middot; Founder</div>
+          </div>
+        </div>
+
+        <div class="final-links">
+          <span><strong>site</strong>hashpay.tech</span>
+          <span><strong>protocol</strong>hashpay.tech/protocol</span>
+          <span><strong>docs</strong>hashpay.tech/docs</span>
+          <span><strong>status</strong><span class="green">&bull; live on HashKey Chain</span></span>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>09 / 09</span>
+        <span class="mono">// the income protocol starts here.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- nav UI -->
+<div class="nav-ui">
+  <button class="nav-btn" onclick="nav(-1)" aria-label="Previous">&lsaquo;</button>
+  <span class="nav-counter"><span id="curSlide">1</span> / 9</span>
+  <button class="nav-btn" onclick="nav(1)" aria-label="Next">&rsaquo;</button>
+  <span class="nav-hint">&larr; &rarr; to navigate &middot; F for fullscreen</span>
+</div>
+
+<script>
+  // --- slide nav ---
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 1;
+
+  function show(n) {
+    current = Math.max(1, Math.min(total, n));
+    slides.forEach(s => s.classList.remove('active'));
+    document.querySelector(`.slide[data-slide="${current}"]`).classList.add('active');
+    document.getElementById('curSlide').textContent = current;
+    if (history.replaceState) history.replaceState(null, '', '#' + current);
+  }
+  function nav(delta) { show(current + delta); }
+
+  // --- keyboard ---
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { nav(1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { nav(-1); e.preventDefault(); }
+    else if (e.key === 'Home') { show(1); }
+    else if (e.key === 'End') { show(total); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+    else if (/^[1-9]$/.test(e.key)) { show(parseInt(e.key)); }
+  });
+
+  // --- viewport scaling (fit slide to window) ---
+  const frame = document.getElementById('frame');
+  function resize() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const baseW = 1600, baseH = 900;
+    const scale = Math.min(vw / baseW, vh / baseH);
+    frame.style.transform = `scale(${scale})`;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // --- deep link ---
+  const hash = parseInt(window.location.hash.replace('#',''));
+  if (hash >= 1 && hash <= total) show(hash);
+</script>
+</body>
+</html>
