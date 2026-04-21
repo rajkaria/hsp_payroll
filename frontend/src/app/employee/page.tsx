@@ -3,6 +3,9 @@
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@/components/connect-button";
 import { EmployeePayments } from "@/components/employee-payments";
+import { ReputationChip } from "@/components/reputation-chip";
+import { PayrollAdvanceCard } from "@/components/payroll-advance-card";
+import { CadenceSelector } from "@/components/cadence-selector";
 import { useRecipientPayrolls } from "@/hooks/usePayrolls";
 import { motion } from "framer-motion";
 import { Wallet, FileText, ArrowLeft } from "lucide-react";
@@ -81,7 +84,25 @@ export default function EmployeeDashboard() {
             transition={{ delay: 0.2 }}
             className="space-y-6"
           >
+            <ReputationChip address={address as `0x${string}`} />
+
+            <PayrollAdvanceCard
+              address={address as `0x${string}`}
+              payrollIds={payrollIds.map((id) => BigInt(id.toString()))}
+            />
+
             <EmployeePayments payrollIds={payrollIds.map((id) => BigInt(id.toString()))} address={address!} />
+
+            <div className="space-y-3">
+              <div className="text-[10px] uppercase tracking-wide text-[#5A6178]">Payout cadence (per payroll)</div>
+              {payrollIds.map((id) => (
+                <CadenceSelector
+                  key={id.toString()}
+                  payrollId={BigInt(id.toString())}
+                  recipient={address as `0x${string}`}
+                />
+              ))}
+            </div>
 
             <div className="text-xs text-[#5A6178] text-center">
               All payments settled via HashKey Settlement Protocol on HashKey Chain

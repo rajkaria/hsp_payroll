@@ -6,11 +6,14 @@ import { useExecuteCycle } from "@/hooks/useExecuteCycle";
 import { useAttestCycle } from "@/hooks/useAttestation";
 import { useCancelPayroll } from "@/hooks/useCancelPayroll";
 import { formatAmount, frequencyToLabel, formatDate } from "@/lib/utils";
-import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2, Timer, MoreHorizontal } from "lucide-react";
+import { Users, Clock, Wallet, BarChart3, CheckCircle2, DollarSign, Zap, ExternalLink, Shield, Loader2, Timer, MoreHorizontal, Sparkles, Gauge } from "lucide-react";
 import { FiatValueBadge } from "./fiat-value-badge";
 import { GenerateReportButton } from "./generate-report-button";
 import { HSPPaymentButton } from "./hsp-payment-button";
 import { FundPayrollInline } from "./fund-payroll-inline";
+import { YieldToggleDialog } from "./yield-toggle-dialog";
+import { CadencePolicyDialog } from "./cadence-policy-dialog";
+import { ComplianceHooksDialog } from "./compliance-hooks-dialog";
 import { getExplorerTxUrl } from "@/config/wagmi";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
@@ -46,6 +49,9 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
   const { chain, address } = useAccount();
   const [now, setNow] = useState(Date.now() / 1000);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [yieldOpen, setYieldOpen] = useState(false);
+  const [cadenceOpen, setCadenceOpen] = useState(false);
+  const [complianceOpen, setComplianceOpen] = useState(false);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -219,6 +225,28 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
                     </button>
                   )}
                   <button
+                    onClick={() => { setMenuOpen(false); setYieldOpen(true); }}
+                    className="w-full px-3 py-2.5 text-left text-sm text-[#9BA3B7] hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#10B981]" />
+                    Yield vault
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); setCadenceOpen(true); }}
+                    className="w-full px-3 py-2.5 text-left text-sm text-[#9BA3B7] hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+                  >
+                    <Gauge className="w-4 h-4 text-[#8B5CF6]" />
+                    Cadence policy
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); setComplianceOpen(true); }}
+                    className="w-full px-3 py-2.5 text-left text-sm text-[#9BA3B7] hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+                  >
+                    <Shield className="w-4 h-4 text-[#F59E0B]" />
+                    Compliance hooks
+                  </button>
+                  <div className="border-t border-white/5" />
+                  <button
                     onClick={() => {
                       setMenuOpen(false);
                       setConfirmCancel(true);
@@ -332,6 +360,24 @@ export function PayrollCard({ payrollId }: PayrollCardProps) {
           </button>
         </div>
       )}
+
+      <YieldToggleDialog
+        payrollId={payrollId}
+        open={yieldOpen}
+        onClose={() => setYieldOpen(false)}
+        onChanged={refetchAll}
+      />
+      <CadencePolicyDialog
+        payrollId={payrollId}
+        recipients={recipients}
+        open={cadenceOpen}
+        onClose={() => setCadenceOpen(false)}
+      />
+      <ComplianceHooksDialog
+        payrollId={payrollId}
+        open={complianceOpen}
+        onClose={() => setComplianceOpen(false)}
+      />
 
       {/* Footer meta row — last executed + attestation tx link (subtle) */}
       {(lastExecuted > 0n || (attestSuccess && attestHash)) && (
