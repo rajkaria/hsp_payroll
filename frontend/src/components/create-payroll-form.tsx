@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreatePayroll } from "@/hooks/useCreatePayroll";
 import { useApproveToken, useFundPayroll } from "@/hooks/useFundPayroll";
 import { useContracts } from "@/hooks/useContracts";
@@ -10,8 +10,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2, Wallet, Lock, BarChart3, Waves, Users, Code2, Briefcase, Palette } from "lucide-react";
 import { TokenSelector } from "./token-selector";
 import { getDefaultTokens, type TokenInfo } from "@/config/tokens";
-import { useChainId } from "wagmi";
+import { useChainId, usePublicClient } from "wagmi";
 import { toast } from "sonner";
+import { PAYROLL_FACTORY_ABI } from "@/config/contracts";
 
 const FREQUENCIES = [
   { label: "Weekly", value: 604800 },
@@ -88,6 +89,8 @@ export function CreatePayrollForm() {
     { address: "", amount: "" },
   ]);
   const [fundAmount, setFundAmount] = useState("");
+  const [newPayrollId, setNewPayrollId] = useState<bigint | null>(null);
+  const publicClient = usePublicClient();
 
   const { create, isPending: isCreating, isConfirming: isCreatingConfirm, isSuccess: createSuccess } = useCreatePayroll();
   const { approve, isPending: isApproving, isConfirming: isApprovingConfirm, isSuccess: approveSuccess } = useApproveToken();
@@ -120,8 +123,28 @@ export function CreatePayrollForm() {
     approve(contracts.MOCK_USDT as `0x${string}`, parseUnits(fundAmount, 6));
   };
 
+  useEffect(() => {
+    if (!createSuccess || !publicClient || newPayrollId !== null) return;
+    (async () => {
+      try {
+        const count = (await publicClient.readContract({
+          address: contracts.PAYROLL_FACTORY as `0x${string}`,
+          abi: PAYROLL_FACTORY_ABI,
+          functionName: "payrollCount",
+        })) as bigint;
+        setNewPayrollId(count);
+      } catch (e) {
+        console.error("Failed to read new payroll id", e);
+      }
+    })();
+  }, [createSuccess, publicClient, contracts.PAYROLL_FACTORY, newPayrollId]);
+
   const handleFund = () => {
-    fund(1n, parseUnits(fundAmount, 6));
+    if (newPayrollId === null) {
+      toast.error("Payroll not ready", { description: "Still reading the new payroll ID from chain. Try again in a moment." });
+      return;
+    }
+    fund(newPayrollId, parseUnits(fundAmount, 6));
   };
 
   return (
