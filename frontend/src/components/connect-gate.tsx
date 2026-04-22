@@ -44,7 +44,9 @@ export function ConnectGate({
           {title} {highlight && <span className="gradient-text">{highlight}</span>}
         </h1>
         <p className="text-sm text-[#9BA3B7] mb-8 leading-relaxed">{message}</p>
-        <ConnectButton />
+        <div className="flex justify-center">
+          <ConnectButton />
+        </div>
         {features && features.length > 0 && (
           <div className="mt-8 pt-6 border-t border-white/5 grid grid-cols-3 gap-3">
             {features.map((f) => (

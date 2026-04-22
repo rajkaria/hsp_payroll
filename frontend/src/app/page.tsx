@@ -167,7 +167,9 @@ export default function Home() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
           >
             {!isConnected ? (
-              <ConnectButton />
+              <div className="flex justify-center w-full">
+                <ConnectButton />
+              </div>
             ) : (
               <>
                 <button
@@ -393,7 +395,9 @@ export default function Home() {
                 Connect your wallet and create your first on-chain payroll in under 2 minutes.
               </p>
               {!isConnected ? (
-                <ConnectButton />
+                <div className="flex justify-center">
+                  <ConnectButton />
+                </div>
               ) : (
                 <button
                   onClick={() => router.push("/employer")}

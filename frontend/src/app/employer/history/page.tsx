@@ -184,7 +184,9 @@ export default function HistoryPage() {
         >
           <Wallet className="w-10 h-10 text-[#8B5CF6] mx-auto mb-4" />
           <p className="text-[#8B95A9] mb-6">Connect your wallet to view transaction history</p>
-          <ConnectButton />
+          <div className="flex justify-center">
+            <ConnectButton />
+          </div>
         </motion.div>
       </div>
     );
