@@ -199,12 +199,31 @@ contract ReputationRegistry {
     function description() external pure returns (string memory) { return "HashPay Verified Income Feed"; }
     function version() external pure returns (uint256) { return 1; }
 
-    /// Returns caller's income as `answer`. Deliberately uses msg.sender so oracle usage
-    /// composes with auth-context-aware contracts (lending pools, credit lines).
+    /// @notice Chainlink-style oracle for a specific recipient. Consumers MUST pass the
+    ///         recipient address explicitly. Replaces the previous tx.origin-based variant
+    ///         which was a phishing/composability hazard.
+    function latestRoundDataFor(address recipient) external view returns (
+        uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
+    ) {
+        RecipientStats storage s = _stats[recipient];
+        answer = int256(s.totalReceived);
+        roundId = uint80(s.totalCycles);
+        startedAt = s.firstPaymentTimestamp;
+        updatedAt = s.lastPaymentTimestamp;
+        answeredInRound = roundId;
+    }
+
+    function latestAnswerFor(address recipient) external view returns (int256) {
+        return int256(_stats[recipient].totalReceived);
+    }
+
+    /// @dev Backwards-compatible AggregatorV3 shape. Returns the *direct caller*'s stats
+    ///      (msg.sender), not tx.origin. Off-chain readers and contracts that already
+    ///      know the address they want should use latestRoundDataFor instead.
     function latestRoundData() external view returns (
         uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
     ) {
-        RecipientStats storage s = _stats[tx.origin];
+        RecipientStats storage s = _stats[msg.sender];
         answer = int256(s.totalReceived);
         roundId = uint80(s.totalCycles);
         startedAt = s.firstPaymentTimestamp;
@@ -213,6 +232,6 @@ contract ReputationRegistry {
     }
 
     function latestAnswer() external view returns (int256) {
-        return int256(_stats[tx.origin].totalReceived);
+        return int256(_stats[msg.sender].totalReceived);
     }
 }

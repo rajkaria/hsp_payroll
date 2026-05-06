@@ -9,6 +9,15 @@ export type ContractAddresses = {
 };
 
 export const CHAIN_CONTRACTS: Record<number, ContractAddresses> = {
+  // HashKey Chain Mainnet (177) — fill in addresses after running scripts/deploy-mainnet.ts
+  177: {
+    HSP_ADAPTER: "0x0000000000000000000000000000000000000000",
+    PAYROLL_FACTORY: "0x0000000000000000000000000000000000000000",
+    MOCK_USDT: "0x0000000000000000000000000000000000000000", // canonical USDT/USDC on HSK mainnet
+    PAYROLL_ATTESTOR: "0x0000000000000000000000000000000000000000",
+    EAS: "0x0000000000000000000000000000000000000000",
+    EAS_SCHEMA_UID: "0x0000000000000000000000000000000000000000000000000000000000000000",
+  },
   // HashKey Chain Testnet (133) — HashPay Protocol v2 deploy
   133: {
     HSP_ADAPTER: "0xCE3D31f8170E8f253F457C1Dd4C9D27344028cF7",
@@ -41,8 +50,15 @@ export const CHAIN_CONTRACTS: Record<number, ContractAddresses> = {
 // Default chain for the app
 export const DEFAULT_CHAIN_ID = 11155111; // Sepolia
 
-// Supported chain IDs
-export const SUPPORTED_CHAIN_IDS = [11155111, 133] as const;
+// Supported chain IDs (mainnet auto-included once addresses are set)
+export const SUPPORTED_CHAIN_IDS = [11155111, 133, 177] as const;
+
+// Mainnet chain IDs — used to gate demo-only features (Mint button, sandbox banners, etc.)
+export const MAINNET_CHAIN_IDS: ReadonlySet<number> = new Set([1, 177]);
+
+export function isMainnet(chainId?: number): boolean {
+  return chainId !== undefined && MAINNET_CHAIN_IDS.has(chainId);
+}
 
 export function getContracts(chainId?: number): ContractAddresses {
   const id = chainId ?? DEFAULT_CHAIN_ID;

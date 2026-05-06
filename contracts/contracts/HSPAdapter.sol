@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts/utils/Pausable.sol";
+
 /**
  * @title HSPAdapter — HashKey Settlement Protocol Adapter
  * @notice Message layer for payment request lifecycle: create → confirm → receipt
  * @dev Does NOT manage funds. Only orchestrates payment status and generates receipts.
  */
-contract HSPAdapter {
+contract HSPAdapter is Pausable {
     enum RequestStatus { Pending, Confirmed, Settled, Cancelled }
 
     struct PaymentRequest {
@@ -34,10 +36,34 @@ contract HSPAdapter {
         owner = msg.sender;
     }
 
-    function authorizeCaller(address caller) external {
+    modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
-        authorizedCallers[caller] = true;
+        _;
     }
+
+    function authorizeCaller(address caller) external onlyOwner {
+        require(caller != address(0), "Zero address");
+        authorizedCallers[caller] = true;
+        emit CallerAuthorized(caller);
+    }
+
+    function revokeCaller(address caller) external onlyOwner {
+        authorizedCallers[caller] = false;
+        emit CallerRevoked(caller);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Zero address");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function pause() external onlyOwner { _pause(); }
+    function unpause() external onlyOwner { _unpause(); }
+
+    event CallerAuthorized(address indexed caller);
+    event CallerRevoked(address indexed caller);
+    event OwnershipTransferred(address indexed from, address indexed to);
 
     event PaymentRequestCreated(
         bytes32 indexed requestId,
@@ -55,7 +81,7 @@ contract HSPAdapter {
         address recipient,
         address token,
         uint256 amount
-    ) external returns (bytes32 requestId) {
+    ) external onlyAuthorized whenNotPaused returns (bytes32 requestId) {
         requestCount++;
         requestId = keccak256(
             abi.encodePacked(payer, recipient, token, amount, block.timestamp, requestCount)
@@ -116,7 +142,7 @@ contract HSPAdapter {
         address[] calldata recipients,
         address token,
         uint256[] calldata amounts
-    ) external returns (bytes32[] memory requestIds) {
+    ) external onlyAuthorized whenNotPaused returns (bytes32[] memory requestIds) {
         require(recipients.length == amounts.length, "Length mismatch");
         requestIds = new bytes32[](recipients.length);
 

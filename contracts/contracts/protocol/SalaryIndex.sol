@@ -10,15 +10,21 @@ interface IPriceFeed {
     function decimals() external view returns (uint8);
 }
 
+interface IPayrollOwnerLookup {
+    function payrolls(uint256 id) external view returns (
+        address owner, address token,
+        uint256 frequency, uint256 startTime, uint256 lastExecuted,
+        uint256 cycleCount, uint256 totalDeposited, uint256 totalPaid,
+        bool active, string memory name
+    );
+}
+
 contract SalaryIndex {
     address public governance;
+    address public factory;
 
-    // fiat code (e.g. "INR", "USD") => price feed (fiat per 1 token)
-    // We store feeds as token/fiat: 1 settlement token = X fiat.
-    // Price query: fiatAmount / (rate scaled by feed decimals) = tokenAmount
     mapping(bytes32 => IPriceFeed) public feeds;
 
-    // payrollId => recipient => (fiat code, fiat amount)
     struct FiatSalary {
         bytes32 fiatCode;
         uint256 fiatAmount;
@@ -28,19 +34,28 @@ contract SalaryIndex {
 
     event FeedSet(bytes32 indexed fiatCode, address feed);
     event FiatSalarySet(uint256 indexed payrollId, address indexed recipient, bytes32 fiatCode, uint256 fiatAmount);
+    event FactorySet(address factory);
 
     modifier onlyGovernance() { require(msg.sender == governance, "Not governance"); _; }
 
     constructor() { governance = msg.sender; }
+
+    function setFactory(address f) external onlyGovernance {
+        factory = f;
+        emit FactorySet(f);
+    }
 
     function setFeed(bytes32 fiatCode, address feed) external onlyGovernance {
         feeds[fiatCode] = IPriceFeed(feed);
         emit FeedSet(fiatCode, feed);
     }
 
-    /// Employer sets a fiat-denominated salary for a recipient on a payroll.
-    /// Token payouts are dynamically computed via `tokenAmountFor`.
+    /// @dev Restricted to the payroll owner; previously unauthenticated, which let anyone
+    ///      overwrite anyone's fiat-denominated salary.
     function setFiatSalary(uint256 payrollId, address recipient, bytes32 fiatCode, uint256 fiatAmount) external {
+        require(factory != address(0), "Factory not set");
+        (address payrollOwner,,,,,,,,,) = IPayrollOwnerLookup(factory).payrolls(payrollId);
+        require(msg.sender == payrollOwner, "Not payroll owner");
         fiatSalary[payrollId][recipient] = FiatSalary(fiatCode, fiatAmount, true);
         emit FiatSalarySet(payrollId, recipient, fiatCode, fiatAmount);
     }

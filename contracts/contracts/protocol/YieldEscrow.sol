@@ -87,8 +87,8 @@ contract YieldEscrow is IPayrollExtension, ReentrancyGuard {
             IERC20(token).safeTransfer(factory, amount);
             return;
         }
-        // deposit into vault
-        IERC20(token).approve(address(c.vault), amount);
+        // deposit into vault — forceApprove avoids USDT-style allowance race
+        IERC20(token).forceApprove(address(c.vault), amount);
         uint256 shares = c.vault.deposit(amount, address(this));
         c.shares += shares;
         c.principalDeposited += amount;

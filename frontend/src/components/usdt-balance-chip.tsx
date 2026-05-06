@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   useAccount,
+  useChainId,
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -13,14 +14,16 @@ import { parseUnits } from "viem";
 import { toast } from "sonner";
 import { Coins, Loader2, Sparkles } from "lucide-react";
 import { useContracts } from "@/hooks/useContracts";
-import { MOCK_ERC20_ABI } from "@/config/contracts";
+import { MOCK_ERC20_ABI, isMainnet } from "@/config/contracts";
 import { formatAmount } from "@/lib/utils";
 
 export function USDTBalanceChip() {
   const { address } = useAccount();
+  const chainId = useChainId();
   const contracts = useContracts();
   const queryClient = useQueryClient();
   const [mintHash, setMintHash] = useState<`0x${string}` | undefined>();
+  const onMainnet = isMainnet(chainId);
 
   const { data: balance, refetch, queryKey } = useReadContract({
     address: contracts.MOCK_USDT as `0x${string}`,
@@ -79,15 +82,17 @@ export function USDTBalanceChip() {
           {balance !== undefined ? formatAmount(balance as bigint) : "…"}
         </div>
       </div>
-      <button
-        onClick={mint}
-        disabled={busy}
-        className="px-2.5 py-1.5 text-[11px] font-medium rounded-lg bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/20 hover:bg-[#10B981]/25 transition-all flex items-center gap-1 disabled:opacity-50"
-        title="Mint 10,000 test USDT"
-      >
-        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-        Mint 10k
-      </button>
+      {!onMainnet && (
+        <button
+          onClick={mint}
+          disabled={busy}
+          className="px-2.5 py-1.5 text-[11px] font-medium rounded-lg bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/20 hover:bg-[#10B981]/25 transition-all flex items-center gap-1 disabled:opacity-50"
+          title="Mint 10,000 test USDT (testnet only)"
+        >
+          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+          Mint 10k
+        </button>
+      )}
     </div>
   );
 }

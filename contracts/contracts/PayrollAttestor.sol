@@ -17,6 +17,13 @@ interface IPayrollFactory {
     }
 
     function getReceipts(uint256 payrollId, uint256 cycleNumber) external view returns (Receipt[] memory);
+
+    function payrolls(uint256 id) external view returns (
+        address owner, address token,
+        uint256 frequency, uint256 startTime, uint256 lastExecuted,
+        uint256 cycleCount, uint256 totalDeposited, uint256 totalPaid,
+        bool active, string memory name
+    );
 }
 
 interface IReputationRegistry {
@@ -96,7 +103,9 @@ contract PayrollAttestor {
         return schemaUID;
     }
 
-    /// @notice Attest all payments in a payroll cycle
+    /// @notice Attest all payments in a payroll cycle. Only the payroll owner may attest;
+    ///         this prevents reputation forgery via unauthenticated attestations
+    ///         (which would otherwise unlock max-tier LTV in PayrollAdvance).
     function attestCycle(
         uint256 payrollId,
         uint256 cycleNumber,
@@ -105,6 +114,9 @@ contract PayrollAttestor {
         string calldata tokenSymbol
     ) external returns (bytes32[] memory) {
         require(schemaUID != bytes32(0), "Schema not registered");
+        (address payrollOwner,,,,,,,,,) = factory.payrolls(payrollId);
+        require(msg.sender == payrollOwner, "Only payroll owner");
+        require(employer == payrollOwner, "Employer must match payroll owner");
 
         IPayrollFactory.Receipt[] memory receipts = factory.getReceipts(payrollId, cycleNumber);
         require(receipts.length > 0, "No receipts for cycle");
@@ -151,7 +163,7 @@ contract PayrollAttestor {
         return uids;
     }
 
-    /// @notice Attest a single payment (for granular control)
+    /// @notice Attest a single payment. Only the payroll owner may attest.
     function attestSingle(
         uint256 payrollId,
         uint256 cycleNumber,
@@ -163,6 +175,9 @@ contract PayrollAttestor {
         string calldata tokenSymbol
     ) external returns (bytes32) {
         require(schemaUID != bytes32(0), "Schema not registered");
+        (address payrollOwner,,,,,,,,,) = factory.payrolls(payrollId);
+        require(msg.sender == payrollOwner, "Only payroll owner");
+        require(employer == payrollOwner, "Employer must match payroll owner");
 
         bytes memory encodedData = abi.encode(
             bytes32(payrollId),

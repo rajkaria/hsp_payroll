@@ -4,11 +4,16 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./HSPAdapter.sol";
 import "./protocol/IPayrollExtension.sol";
 
-contract PayrollFactory is ReentrancyGuard {
+contract PayrollFactory is ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
+
+    /// @dev Timelock delay for extension setters. Mainnet-grade: gives users time to exit
+    ///      before a swap takes effect, so a compromised governance key cannot drain instantly.
+    uint256 public constant EXTENSION_TIMELOCK = 48 hours;
 
     struct Payroll {
         address owner;
@@ -48,7 +53,13 @@ contract PayrollFactory is ReentrancyGuard {
     IPayrollExtension public advanceExtension;// optional: repay hook for advances
     address public complianceRegistry;        // optional: compliance hook evaluator
 
+    /// @dev Pending extension swaps; key = bytes32 kind, value = (target, eta).
+    struct PendingExtension { address target; uint256 eta; }
+    mapping(bytes32 => PendingExtension) public pendingExtension;
+
     event ExtensionSet(bytes32 indexed kind, address indexed extension);
+    event ExtensionQueued(bytes32 indexed kind, address indexed target, uint256 eta);
+    event ExtensionCancelled(bytes32 indexed kind);
     event RecipientSkipped(uint256 indexed payrollId, address indexed recipient, string reason);
 
     event PayrollCreated(uint256 indexed payrollId, address indexed owner, address token, string name);
@@ -75,25 +86,67 @@ contract PayrollFactory is ReentrancyGuard {
         governance = g;
     }
 
+    /// @dev Initial wiring (one-shot per slot, while still zero) is allowed without timelock
+    ///      so deploy scripts work; subsequent swaps require queue+executeExtension.
     function setExtension(address ext) external onlyGovernance {
+        require(address(extension) == address(0), "Use queueExtension for swaps");
         extension = IPayrollExtension(ext);
         emit ExtensionSet("cadence", ext);
     }
 
     function setYieldExtension(address ext) external onlyGovernance {
+        require(address(yieldExtension) == address(0), "Use queueExtension for swaps");
         yieldExtension = IPayrollExtension(ext);
         emit ExtensionSet("yield", ext);
     }
 
     function setAdvanceExtension(address ext) external onlyGovernance {
+        require(address(advanceExtension) == address(0), "Use queueExtension for swaps");
         advanceExtension = IPayrollExtension(ext);
         emit ExtensionSet("advance", ext);
     }
 
     function setComplianceRegistry(address r) external onlyGovernance {
+        require(complianceRegistry == address(0), "Use queueExtension for swaps");
         complianceRegistry = r;
         emit ExtensionSet("compliance", r);
     }
+
+    // ---- Timelocked extension swaps (for live mainnet upgrades) ----
+
+    function queueExtension(bytes32 kind, address target) external onlyGovernance {
+        require(_isValidKind(kind), "Bad kind");
+        uint256 eta = block.timestamp + EXTENSION_TIMELOCK;
+        pendingExtension[kind] = PendingExtension(target, eta);
+        emit ExtensionQueued(kind, target, eta);
+    }
+
+    function cancelExtension(bytes32 kind) external onlyGovernance {
+        delete pendingExtension[kind];
+        emit ExtensionCancelled(kind);
+    }
+
+    function executeExtension(bytes32 kind) external onlyGovernance {
+        PendingExtension memory pe = pendingExtension[kind];
+        require(pe.eta != 0, "Nothing queued");
+        require(block.timestamp >= pe.eta, "Timelock not elapsed");
+        delete pendingExtension[kind];
+        if (kind == "cadence") extension = IPayrollExtension(pe.target);
+        else if (kind == "yield") yieldExtension = IPayrollExtension(pe.target);
+        else if (kind == "advance") advanceExtension = IPayrollExtension(pe.target);
+        else if (kind == "compliance") complianceRegistry = pe.target;
+        else revert("Bad kind");
+        emit ExtensionSet(kind, pe.target);
+    }
+
+    function _isValidKind(bytes32 k) internal pure returns (bool) {
+        return k == "cadence" || k == "yield" || k == "advance" || k == "compliance";
+    }
+
+    // ---- Emergency pause ----
+
+    function pause() external onlyGovernance { _pause(); }
+    function unpause() external onlyGovernance { _unpause(); }
 
     modifier onlyPayrollOwner(uint256 payrollId) {
         require(payrolls[payrollId].owner == msg.sender, "Not payroll owner");
@@ -137,7 +190,7 @@ contract PayrollFactory is ReentrancyGuard {
         emit PayrollCreated(payrollId, msg.sender, token, name);
     }
 
-    function fundPayroll(uint256 payrollId, uint256 amount) external onlyPayrollOwner(payrollId) nonReentrant {
+    function fundPayroll(uint256 payrollId, uint256 amount) external onlyPayrollOwner(payrollId) nonReentrant whenNotPaused {
         Payroll storage p = payrolls[payrollId];
         require(p.active, "Payroll not active");
 
@@ -154,7 +207,7 @@ contract PayrollFactory is ReentrancyGuard {
         emit PayrollFunded(payrollId, amount, escrowBalances[payrollId]);
     }
 
-    function executeCycle(uint256 payrollId) external onlyPayrollOwner(payrollId) nonReentrant {
+    function executeCycle(uint256 payrollId) external onlyPayrollOwner(payrollId) nonReentrant whenNotPaused {
         Payroll storage p = payrolls[payrollId];
         require(p.active, "Payroll not active");
         if (p.lastExecuted > 0) {
@@ -213,9 +266,13 @@ contract PayrollFactory is ReentrancyGuard {
                 (payoutTarget, payoutAmount) = extension.onSettleRecipient(
                     payrollId, recipient, netAmount, p.token, requestIds[i]
                 );
+                // Sanity: extension must not over-spend or short the recipient.
+                // Must equal netAmount exactly so escrow accounting stays consistent.
+                require(payoutAmount == netAmount, "Extension payout mismatch");
+                require(payoutTarget != address(0), "Bad payout target");
             }
 
-            if (payoutAmount > 0 && payoutTarget != address(0)) {
+            if (payoutAmount > 0) {
                 IERC20(p.token).safeTransfer(payoutTarget, payoutAmount);
             }
             hspAdapter.confirmPayment(requestIds[i]);
@@ -231,7 +288,7 @@ contract PayrollFactory is ReentrancyGuard {
             }));
 
             emit PaymentSettled(payrollId, recipient, amt, requestIds[i]);
-            actualSpent += amt; // gross amount from escrow is fully consumed; advance/cadence reroute within amt
+            actualSpent += amt; // gross from escrow consumed: advance debt + cadence/recipient payout
         }
 
         escrowBalances[payrollId] -= actualSpent;
@@ -253,6 +310,10 @@ contract PayrollFactory is ReentrancyGuard {
         uint256 refund = escrowBalances[payrollId];
         if (refund > 0) {
             escrowBalances[payrollId] = 0;
+            // If yield extension holds the funds in a vault, redeem them back to factory first.
+            if (address(yieldExtension) != address(0)) {
+                yieldExtension.beforeCycle(payrollId, p.token, refund);
+            }
             IERC20(p.token).safeTransfer(msg.sender, refund);
         }
 
@@ -262,7 +323,11 @@ contract PayrollFactory is ReentrancyGuard {
     function withdrawExcess(uint256 payrollId, uint256 amount) external onlyPayrollOwner(payrollId) nonReentrant {
         require(escrowBalances[payrollId] >= amount, "Insufficient balance");
         escrowBalances[payrollId] -= amount;
-        IERC20(payrolls[payrollId].token).safeTransfer(msg.sender, amount);
+        Payroll storage p = payrolls[payrollId];
+        if (address(yieldExtension) != address(0)) {
+            yieldExtension.beforeCycle(payrollId, p.token, amount);
+        }
+        IERC20(p.token).safeTransfer(msg.sender, amount);
         emit FundsWithdrawn(payrollId, amount);
     }
 

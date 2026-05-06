@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./IPayrollExtension.sol";
 
 interface IReputationRegistryRead {
@@ -25,13 +26,14 @@ interface IPayrollFactoryMin {
         uint256 cycleCount, uint256 totalDeposited, uint256 totalPaid,
         bool active
     );
+    function escrowBalances(uint256 id) external view returns (uint256);
 }
 
 /// @title PayrollAdvance — receipt-backed income advances.
 /// @notice Closes the PayFi loop: Income → Reputation → Credit → Settlement.
 ///         Lenders pool liquidity, earn interest from advances, auto-repaid on next executeCycle.
 ///         Reputation score gates LTV and APR (bonus #6: reputation-priced APR).
-contract PayrollAdvance is IPayrollExtension, ReentrancyGuard {
+contract PayrollAdvance is IPayrollExtension, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     struct Advance {
@@ -80,7 +82,10 @@ contract PayrollAdvance is IPayrollExtension, ReentrancyGuard {
 
     // ---- Lender pool ----
 
-    function fundLenderPool(address token, uint256 amount) external nonReentrant returns (uint256 shares) {
+    function pause() external onlyGovernance { _pause(); }
+    function unpause() external onlyGovernance { _unpause(); }
+
+    function fundLenderPool(address token, uint256 amount) external nonReentrant whenNotPaused returns (uint256 shares) {
         require(amount > 0, "Zero amount");
         uint256 pool = lenderPoolBalance[token];
         uint256 ts = totalShares[token];
@@ -134,15 +139,20 @@ contract PayrollAdvance is IPayrollExtension, ReentrancyGuard {
         return cap - outstanding;
     }
 
-    function requestAdvance(uint256 payrollId, uint256 amount) external nonReentrant returns (uint256 id) {
-        (address owner, address token,,,,,,,, ) = IPayrollFactoryMin(factory).payrolls(payrollId);
+    function requestAdvance(uint256 payrollId, uint256 amount) external nonReentrant whenNotPaused returns (uint256 id) {
+        (address owner, address token,,,,,, ,bool active, ) = IPayrollFactoryMin(factory).payrolls(payrollId);
         require(owner != address(0), "No payroll");
+        require(active, "Payroll inactive");
         uint256 max = maxAdvanceFor(msg.sender, payrollId);
         if (amount == 0 || amount > max) {
             emit AdvanceDenied(msg.sender, amount == 0 ? "Zero amount" : "Exceeds LTV");
             revert("Advance denied");
         }
         require(lenderPoolBalance[token] >= amount, "Insufficient pool");
+        // Funding floor: payroll must hold at least the next cycle's worth of escrow,
+        // otherwise the auto-repay will fail and lenders eat the default.
+        uint256 nextCycleCost = _cycleCost(payrollId);
+        require(IPayrollFactoryMin(factory).escrowBalances(payrollId) >= nextCycleCost, "Payroll underfunded");
         (, uint256 interestBps) = tierFor(msg.sender);
 
         advanceCount++;
@@ -246,5 +256,11 @@ contract PayrollAdvance is IPayrollExtension, ReentrancyGuard {
             if (recipients[i] == recipient) return amounts[i];
         }
         return 0;
+    }
+
+    function _cycleCost(uint256 payrollId) internal view returns (uint256 total) {
+        (,,, , uint256[] memory amounts,,,,,,,) =
+            IPayrollFactoryMin(factory).getPayrollDetails(payrollId);
+        for (uint256 i = 0; i < amounts.length; i++) total += amounts[i];
     }
 }

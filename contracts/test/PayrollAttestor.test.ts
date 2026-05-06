@@ -92,7 +92,7 @@ describe("PayrollAttestor", function () {
       const { attestor, employer, token } = await loadFixture(deployFixture);
       await attestor.registerSchema();
 
-      const tx = await attestor.attestCycle(
+      const tx = await attestor.connect(employer).attestCycle(
         1, // payrollId
         1, // cycleNumber
         employer.address,
@@ -117,7 +117,7 @@ describe("PayrollAttestor", function () {
       await attestor.registerSchema();
 
       // Use staticCall to get return value
-      const uids = await attestor.attestCycle.staticCall(
+      const uids = await attestor.connect(employer).attestCycle.staticCall(
         1, 1, employer.address, await token.getAddress(), "USDT"
       );
       expect(uids.length).to.equal(2);
@@ -128,7 +128,7 @@ describe("PayrollAttestor", function () {
     it("reverts if schema not registered", async function () {
       const { attestor, employer, token } = await loadFixture(deployFixture);
       await expect(
-        attestor.attestCycle(1, 1, employer.address, await token.getAddress(), "USDT")
+        attestor.connect(employer).attestCycle(1, 1, employer.address, await token.getAddress(), "USDT")
       ).to.be.revertedWith("Schema not registered");
     });
 
@@ -136,7 +136,7 @@ describe("PayrollAttestor", function () {
       const { attestor, employer, token } = await loadFixture(deployFixture);
       await attestor.registerSchema();
       await expect(
-        attestor.attestCycle(1, 99, employer.address, await token.getAddress(), "USDT") // non-existent cycle
+        attestor.connect(employer).attestCycle(1, 99, employer.address, await token.getAddress(), "USDT") // non-existent cycle
       ).to.be.revertedWith("No receipts for cycle");
     });
 
@@ -144,10 +144,10 @@ describe("PayrollAttestor", function () {
       const { attestor, eas, employer, token } = await loadFixture(deployFixture);
       await attestor.registerSchema();
 
-      const uids = await attestor.attestCycle.staticCall(
+      const uids = await attestor.connect(employer).attestCycle.staticCall(
         1, 1, employer.address, await token.getAddress(), "USDT"
       );
-      await attestor.attestCycle(1, 1, employer.address, await token.getAddress(), "USDT");
+      await attestor.connect(employer).attestCycle(1, 1, employer.address, await token.getAddress(), "USDT");
 
       // getAttestation should not revert for valid UIDs (it reverts for non-existent)
       const att = await eas.getAttestation(uids[0]);
@@ -165,7 +165,7 @@ describe("PayrollAttestor", function () {
       const { attestor, employer, token, recipient1 } = await loadFixture(deployFixture);
       await attestor.registerSchema();
 
-      const uid = await attestor.attestSingle.staticCall(
+      const uid = await attestor.connect(employer).attestSingle.staticCall(
         1, 1, employer.address, recipient1.address,
         ethers.parseUnits("1000", 6),
         await token.getAddress(),
