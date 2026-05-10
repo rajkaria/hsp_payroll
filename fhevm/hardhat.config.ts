@@ -6,8 +6,11 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY ?? "";
+// Default public RPC. Blast API was deprecated in 2026 — PublicNode is the
+// recommended free fallback. For production demos, set SEPOLIA_RPC_URL in .env
+// to an Alchemy / Infura / QuickNode endpoint to avoid rate limiting.
 const SEPOLIA_RPC_URL =
-  process.env.SEPOLIA_RPC_URL ?? "https://eth-sepolia.public.blastapi.io";
+  process.env.SEPOLIA_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY ?? "";
 
 const config: HardhatUserConfig = {
