@@ -10,6 +10,11 @@ import * as path from "node:path";
  * against the salary and score.
  */
 async function main() {
+  // The FHEVM plugin auto-initializes for `hardhat test` / built-in tasks but
+  // NOT for `hardhat run`. Without this call, `fhevm.createEncryptedInput`
+  // throws "The Hardhat Fhevm plugin is not initialized."
+  await fhevm.initializeCLIApi();
+
   const deployments = JSON.parse(
     fs.readFileSync(path.join(__dirname, "..", "deployments.json"), "utf8"),
   );
