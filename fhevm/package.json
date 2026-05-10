@@ -8,7 +8,9 @@
     "test": "hardhat test",
     "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
     "seed:sepolia": "hardhat run scripts/seed-demo.ts --network sepolia",
-    "advance:sepolia": "hardhat run scripts/request-advance.ts --network sepolia"
+    "advance:sepolia": "hardhat run scripts/request-advance.ts --network sepolia",
+    "verify:deployment": "hardhat run scripts/verify-deployment.ts --network sepolia",
+    "wire-frontend": "ts-node scripts/wire-frontend.ts"
   },
   "devDependencies": {
     "@fhevm/hardhat-plugin": "0.4.2",
