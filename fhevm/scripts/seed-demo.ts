@@ -16,7 +16,13 @@ async function main() {
   const { contracts } = deployments;
   const [employer] = await ethers.getSigners();
 
-  const employee = process.env.EMPLOYEE_ADDRESS ?? employer.address;
+  // Treat empty-string env var as unset — `??` only catches null/undefined,
+  // so a blank `EMPLOYEE_ADDRESS=` line in .env would otherwise be passed to
+  // ethers and trip a `resolveName` ENS lookup that the Hardhat provider
+  // doesn't implement.
+  const envEmployee = process.env.EMPLOYEE_ADDRESS?.trim();
+  const employee =
+    envEmployee && envEmployee.length > 0 ? envEmployee : employer.address;
   console.log("Employer:", employer.address);
   console.log("Employee:", employee);
 
