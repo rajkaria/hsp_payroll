@@ -38,7 +38,7 @@ async function main() {
 
   // Decrypt the borrower's cUSDT balance to see if the advance was approved.
   const balanceHandle = await cUSDT.confidentialBalanceOf(borrower.address);
-  const clear = await fhevm.userDecryptEuint(64, balanceHandle, contracts.ConfidentialUSDT, borrower);
+  const clear = await fhevm.userDecryptEuint(FhevmType.euint64, balanceHandle, contracts.ConfidentialUSDT, borrower);
   console.log("Decrypted cUSDT balance (cents):", clear.toString());
 }
 

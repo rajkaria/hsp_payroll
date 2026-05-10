@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {FHE, euint32, euint64, externalEuint64, ebool} from "@fhevm/solidity/lib/FHE.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
 interface IConfidentialSalaryIndex {
     function salaryOf(address employee) external view returns (euint64);
@@ -31,7 +31,7 @@ interface IConfidentialUSDT {
 ///      approved or denied, an identical "ConfidentialDecisionEmitted"
 ///      event is emitted — denial is indistinguishable from approval to
 ///      an outside observer.
-contract ConfidentialAdvance is SepoliaConfig {
+contract ConfidentialAdvance is ZamaEthereumConfig {
     address public immutable owner;
 
     IConfidentialSalaryIndex public immutable salaryIndex;
@@ -117,6 +117,11 @@ contract ConfidentialAdvance is SepoliaConfig {
         FHE.allowThis(disbursed);
         FHE.allow(approved, msg.sender);
         FHE.allow(disbursed, msg.sender);
+
+        // Grant the cUSDT contract transient permission to operate on the
+        // disbursed handle for the duration of this transaction. Without
+        // this, the FHE.add inside cUSDT._credit reverts with ACLNotAllowed.
+        FHE.allowTransient(disbursed, address(cUSDT));
 
         // Disburse cUSDT (encrypted; 0 if denied).
         cUSDT.confidentialMint(msg.sender, disbursed);

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {FHE, euint64, externalEuint64, ebool} from "@fhevm/solidity/lib/FHE.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
 /// @title ConfidentialUSDT
 /// @notice Minimal ERC-7984-style confidential token used as the cUSDT
@@ -12,7 +12,7 @@ import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 /// by the demo (mint, transfer, balanceOf, internal credit/debit by
 /// authorized protocol contracts). For mainnet a vetted ERC-7984
 /// implementation should be used in place of this contract.
-contract ConfidentialUSDT is SepoliaConfig {
+contract ConfidentialUSDT is ZamaEthereumConfig {
     string public constant name = "Confidential USDT";
     string public constant symbol = "cUSDT";
     uint8 public constant decimals = 6;

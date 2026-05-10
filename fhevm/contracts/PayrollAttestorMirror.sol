@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {FHE, euint32, externalEuint32} from "@fhevm/solidity/lib/FHE.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
 interface IConfidentialReputationRegistry {
     function updateScore(address borrower, externalEuint32 encryptedScore, bytes calldata inputProof) external;
@@ -18,7 +18,7 @@ interface IConfidentialReputationRegistry {
 /// @dev The plaintext side is a denormalised event log of public HSK
 /// activity. The encrypted side is the credit score that lenders consume.
 /// No HSK contract is modified — the relayer reads HSK events off-chain.
-contract PayrollAttestorMirror is SepoliaConfig {
+contract PayrollAttestorMirror is ZamaEthereumConfig {
     address public immutable owner;
     address public relayer;
     address public reputationRegistry;
