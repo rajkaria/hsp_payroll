@@ -10,6 +10,11 @@ import * as path from "node:path";
  * Run after `seed-demo.ts`.
  */
 async function main() {
+  // The FHEVM plugin auto-initializes for `hardhat test` / built-in tasks but
+  // NOT for `hardhat run`. Without this call, both `fhevm.createEncryptedInput`
+  // and the provider extender's error formatter trip a "not initialized" throw.
+  await fhevm.initializeCLIApi();
+
   const deployments = JSON.parse(
     fs.readFileSync(path.join(__dirname, "..", "deployments.json"), "utf8"),
   );
