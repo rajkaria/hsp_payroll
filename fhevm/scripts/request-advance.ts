@@ -1,4 +1,5 @@
 import { ethers, fhevm } from "hardhat";
+import { FhevmType } from "@fhevm/hardhat-plugin";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
