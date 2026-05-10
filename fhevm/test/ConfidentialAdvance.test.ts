@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers, fhevm } from "hardhat";
+import { FhevmType } from "@fhevm/hardhat-plugin";
 import type { Signer } from "ethers";
 
 describe("HashPay Confidential — end to end", function () {
@@ -92,7 +93,7 @@ describe("HashPay Confidential — end to end", function () {
     ).wait();
 
     const balanceHandle = await cUSDT.confidentialBalanceOf(employeeAddr);
-    const balance = await fhevm.userDecryptEuint(64, balanceHandle, cUSDTAddr, employee);
+    const balance = await fhevm.userDecryptEuint(FhevmType.euint64, balanceHandle, cUSDTAddr, employee);
     expect(balance).to.equal(120_000n);
   });
 
@@ -109,7 +110,7 @@ describe("HashPay Confidential — end to end", function () {
     // The previous test already credited 120_000. After a denied request,
     // balance should be unchanged (additional credit = 0).
     const balanceHandle = await cUSDT.confidentialBalanceOf(employeeAddr);
-    const balance = await fhevm.userDecryptEuint(64, balanceHandle, cUSDTAddr, employee);
+    const balance = await fhevm.userDecryptEuint(FhevmType.euint64, balanceHandle, cUSDTAddr, employee);
     expect(balance).to.equal(120_000n);
   });
 });
