@@ -17,8 +17,11 @@ Deadline: **2026-05-10 23:59 AOE** (≈ 2026-05-11 12:00 UTC).
       + a few demo calls). Get it from https://sepoliafaucet.com or
       https://www.alchemy.com/faucets/ethereum-sepolia.
 - [ ] An RPC URL. Options:
-      - `https://eth-sepolia.public.blastapi.io` (free, rate-limited)
+      - `https://ethereum-sepolia-rpc.publicnode.com` (free, rate-limited)
+      - `https://sepolia.drpc.org` (free, rate-limited)
       - Alchemy / Infura / QuickNode (recommended for the demo)
+      - **NOTE:** Blast API (`eth-sepolia.public.blastapi.io`) was
+        deprecated in 2026. Don't use it.
 - [ ] `cp fhevm/.env.example fhevm/.env`, then fill:
       - `PRIVATE_KEY=` (no 0x prefix needed by viem; with 0x prefix is fine for ethers)
       - `SEPOLIA_RPC_URL=`
