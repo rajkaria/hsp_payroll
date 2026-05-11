@@ -12,6 +12,32 @@ import {
   ConfidentialSalaryIndexAbi,
 } from "@/lib/fhevm/contracts";
 
+type SetStage =
+  | null
+  | "encrypting"
+  | "signing-set"
+  | "signing-auth"
+  | "done";
+
+type DecryptStage =
+  | null
+  | "fetching"
+  | "signing"
+  | "decrypting"
+  | "done";
+
+const setStageText: Record<Exclude<SetStage, null | "done">, string> = {
+  encrypting: "Encrypting & proving…",
+  "signing-set": "Confirm setSalary in wallet…",
+  "signing-auth": "Confirm viewer auth in wallet…",
+};
+
+const decryptStageText: Record<Exclude<DecryptStage, null | "done">, string> = {
+  fetching: "Fetching encrypted handle…",
+  signing: "Sign decryption request…",
+  decrypting: "Decrypting via relayer…",
+};
+
 export function SalaryViewCard({
   mode,
   counterpartyAddress,
@@ -23,9 +49,13 @@ export function SalaryViewCard({
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
   const [salaryInput, setSalaryInput] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [setStage, setSetStage] = useState<SetStage>(null);
+  const [decryptStage, setDecryptStage] = useState<DecryptStage>(null);
   const [decrypted, setDecrypted] = useState<bigint | null>(null);
   const [hidden, setHidden] = useState(true);
+
+  const setBusy = setStage !== null && setStage !== "done";
+  const decryptBusy = decryptStage !== null && decryptStage !== "done";
 
   const setSalary = async () => {
     if (!address || !walletClient) return;
@@ -34,13 +64,15 @@ export function SalaryViewCard({
       toast.error("Enter a salary greater than zero");
       return;
     }
-    setBusy(true);
     try {
+      setSetStage("encrypting");
       const { handle, proof } = await encryptUint64(
         FHEVM_ADDRESSES.ConfidentialSalaryIndex,
         address,
         cents,
       );
+
+      setSetStage("signing-set");
       const hash = await walletClient.writeContract({
         address: FHEVM_ADDRESSES.ConfidentialSalaryIndex,
         abi: ConfidentialSalaryIndexAbi,
@@ -48,6 +80,8 @@ export function SalaryViewCard({
         args: [counterpartyAddress, handle, proof],
       });
       toast.success("Encrypted salary submitted", { description: hash });
+
+      setSetStage("signing-auth");
       const auth = await walletClient.writeContract({
         address: FHEVM_ADDRESSES.ConfidentialSalaryIndex,
         abi: ConfidentialSalaryIndexAbi,
@@ -57,18 +91,20 @@ export function SalaryViewCard({
       toast.success("ConfidentialAdvance authorized as viewer", {
         description: auth,
       });
+      setSetStage("done");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Failed to set salary", { description: msg });
+      setSetStage(null);
     } finally {
-      setBusy(false);
+      setTimeout(() => setSetStage(null), 1500);
     }
   };
 
   const decrypt = async () => {
     if (!address || !walletClient || !publicClient) return;
-    setBusy(true);
     try {
+      setDecryptStage("fetching");
       const target = mode === "employee" ? address : counterpartyAddress;
       const handle = (await publicClient.readContract({
         address: FHEVM_ADDRESSES.ConfidentialSalaryIndex,
@@ -76,21 +112,27 @@ export function SalaryViewCard({
         functionName: "salaryOf",
         args: [target],
       })) as `0x${string}`;
+
+      setDecryptStage("signing");
+      const signTypedData = async (params: Parameters<typeof walletClient.signTypedData>[0]) => {
+        return walletClient.signTypedData(params);
+      };
+
+      setDecryptStage("decrypting");
       const value = await userDecryptUint(
         handle,
         FHEVM_ADDRESSES.ConfidentialSalaryIndex,
-        {
-          address,
-          signTypedData: walletClient.signTypedData.bind(walletClient),
-        },
+        { address, signTypedData },
       );
       setDecrypted(value);
       setHidden(false);
+      setDecryptStage("done");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Decryption failed", { description: msg });
+      setDecryptStage(null);
     } finally {
-      setBusy(false);
+      setTimeout(() => setDecryptStage(null), 1500);
     }
   };
 
@@ -119,17 +161,28 @@ export function SalaryViewCard({
               placeholder="5000"
               value={salaryInput}
               onChange={(e) => setSalaryInput(e.target.value)}
-              disabled={busy}
+              disabled={setBusy}
               className="bg-white/[0.02] border-white/5 focus-visible:border-[#8B5CF6]/40"
             />
             <Button
               onClick={setSalary}
-              disabled={busy}
-              className="bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] border-0"
+              disabled={setBusy}
+              className="bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] border-0 min-w-[110px]"
             >
-              {busy ? "Encrypting…" : "Set"}
+              {setBusy ? "Working…" : "Set"}
             </Button>
           </div>
+          {setBusy && setStage ? (
+            <div className="flex items-center gap-2 text-[11px] text-[#C084FC] pt-1">
+              <div className="w-3 h-3 rounded-full border-2 border-[#8B5CF6]/30 border-t-[#C084FC] animate-spin" />
+              <span>{setStageText[setStage]}</span>
+              {setStage === "encrypting" ? (
+                <span className="text-[#5A6178]">
+                  · this step talks to the FHE relayer, can take 20–60s
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -161,13 +214,19 @@ export function SalaryViewCard({
           )}
           <Button
             onClick={decrypt}
-            disabled={busy}
+            disabled={decryptBusy}
             variant="outline"
-            className="bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-[#8B5CF6]/30"
+            className="bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-[#8B5CF6]/30 min-w-[110px]"
           >
-            {busy ? "Decrypting…" : "Decrypt"}
+            {decryptBusy ? "Working…" : "Decrypt"}
           </Button>
         </div>
+        {decryptBusy && decryptStage ? (
+          <div className="flex items-center gap-2 text-[11px] text-[#06B6D4] pt-1">
+            <div className="w-3 h-3 rounded-full border-2 border-[#06B6D4]/30 border-t-[#06B6D4] animate-spin" />
+            <span>{decryptStageText[decryptStage]}</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );

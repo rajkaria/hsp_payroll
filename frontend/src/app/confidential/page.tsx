@@ -21,6 +21,7 @@ import {
 import { SalaryViewCard } from "@/components/confidential/SalaryViewCard";
 import { RequestAdvanceCard } from "@/components/confidential/RequestAdvanceCard";
 import { FHEVM_CHAIN_ID } from "@/lib/fhevm/contracts";
+import { useFhevmReady } from "@/hooks/useFhevmReady";
 
 function SectionLabel({ title, hint }: { title: string; hint?: string }) {
   return (
@@ -68,6 +69,7 @@ export default function ConfidentialPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"employer" | "employee">("employee");
   const [counterparty, setCounterparty] = useState("");
+  const fhevm = useFhevmReady();
 
   const onWrongChain = isConnected && chainId !== FHEVM_CHAIN_ID;
 
@@ -147,6 +149,41 @@ export default function ConfidentialPage() {
             </p>
           </motion.div>
         )}
+
+        {!onWrongChain &&
+          (fhevm.status === "loading-sdk" ||
+            fhevm.status === "loading-keys" ||
+            fhevm.status === "error") && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`glass rounded-2xl p-4 mb-8 border-l-2 ${
+                fhevm.status === "error"
+                  ? "border-l-red-500/60"
+                  : "border-l-[#8B5CF6]/60"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {fhevm.status !== "error" && (
+                  <div className="w-4 h-4 rounded-full border-2 border-[#8B5CF6]/30 border-t-[#C084FC] animate-spin flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-white font-medium">
+                    {fhevm.status === "loading-sdk" &&
+                      "Loading FHE relayer SDK…"}
+                    {fhevm.status === "loading-keys" &&
+                      "Fetching Sepolia FHE keys (one-time, ~10–30s)…"}
+                    {fhevm.status === "error" && "FHE init failed"}
+                  </div>
+                  <div className="text-[11px] text-[#9BA3B7] mt-0.5">
+                    {fhevm.status === "error"
+                      ? fhevm.error ?? "Try reloading the page."
+                      : "Warming the SDK in the background so your first encrypted action is fast."}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

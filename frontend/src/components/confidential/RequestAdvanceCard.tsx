@@ -14,15 +14,45 @@ import {
   ConfidentialReputationRegistryAbi,
 } from "@/lib/fhevm/contracts";
 
+type RequestStage =
+  | null
+  | "signing-auth"
+  | "encrypting"
+  | "signing-request"
+  | "done";
+
+type DecryptStage =
+  | null
+  | "fetching"
+  | "signing"
+  | "decrypting"
+  | "done";
+
+const requestStageText: Record<Exclude<RequestStage, null | "done">, string> = {
+  "signing-auth": "Confirm reputation viewer auth in wallet…",
+  encrypting: "Encrypting & proving via relayer (20–60s)…",
+  "signing-request": "Confirm requestAdvance in wallet…",
+};
+
+const decryptStageText: Record<Exclude<DecryptStage, null | "done">, string> = {
+  fetching: "Fetching encrypted balance handle…",
+  signing: "Sign decryption request…",
+  decrypting: "Decrypting via relayer…",
+};
+
 export function RequestAdvanceCard() {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
 
   const [amount, setAmount] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [requestStage, setRequestStage] = useState<RequestStage>(null);
+  const [decryptStage, setDecryptStage] = useState<DecryptStage>(null);
   const [decryptedBalance, setDecryptedBalance] = useState<bigint | null>(null);
   const [previousBalance, setPreviousBalance] = useState<bigint | null>(null);
+
+  const requestBusy = requestStage !== null && requestStage !== "done";
+  const decryptBusy = decryptStage !== null && decryptStage !== "done";
 
   const authorizeAndRequest = async () => {
     if (!address || !walletClient || !publicClient) return;
@@ -31,8 +61,8 @@ export function RequestAdvanceCard() {
       toast.error("Enter an advance amount greater than zero");
       return;
     }
-    setBusy(true);
     try {
+      setRequestStage("signing-auth");
       const authHash = await walletClient.writeContract({
         address: FHEVM_ADDRESSES.ConfidentialReputationRegistry,
         abi: ConfidentialReputationRegistryAbi,
@@ -41,12 +71,14 @@ export function RequestAdvanceCard() {
       });
       toast.message("Authorized advance contract", { description: authHash });
 
+      setRequestStage("encrypting");
       const { handle, proof } = await encryptUint64(
         FHEVM_ADDRESSES.ConfidentialAdvance,
         address,
         cents,
       );
 
+      setRequestStage("signing-request");
       const hash = await walletClient.writeContract({
         address: FHEVM_ADDRESSES.ConfidentialAdvance,
         abi: ConfidentialAdvanceAbi,
@@ -56,39 +88,46 @@ export function RequestAdvanceCard() {
       toast.success("Confidential advance request submitted", {
         description: hash,
       });
+      setRequestStage("done");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Request failed", { description: msg });
+      setRequestStage(null);
     } finally {
-      setBusy(false);
+      setTimeout(() => setRequestStage(null), 1500);
     }
   };
 
   const decryptBalance = async () => {
     if (!address || !walletClient || !publicClient) return;
-    setBusy(true);
     try {
+      setDecryptStage("fetching");
       const handle = (await publicClient.readContract({
         address: FHEVM_ADDRESSES.ConfidentialUSDT,
         abi: ConfidentialUSDTAbi,
         functionName: "confidentialBalanceOf",
         args: [address],
       })) as `0x${string}`;
+
+      setDecryptStage("signing");
+      const signTypedData = async (params: Parameters<typeof walletClient.signTypedData>[0]) =>
+        walletClient.signTypedData(params);
+
+      setDecryptStage("decrypting");
       const value = await userDecryptUint(
         handle,
         FHEVM_ADDRESSES.ConfidentialUSDT,
-        {
-          address,
-          signTypedData: walletClient.signTypedData.bind(walletClient),
-        },
+        { address, signTypedData },
       );
       setPreviousBalance(decryptedBalance);
       setDecryptedBalance(value);
+      setDecryptStage("done");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Decryption failed", { description: msg });
+      setDecryptStage(null);
     } finally {
-      setBusy(false);
+      setTimeout(() => setDecryptStage(null), 1500);
     }
   };
 
@@ -129,17 +168,23 @@ export function RequestAdvanceCard() {
             placeholder="1200"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            disabled={busy}
+            disabled={requestBusy}
             className="bg-white/[0.02] border-white/5 focus-visible:border-[#8B5CF6]/40"
           />
           <Button
             onClick={authorizeAndRequest}
-            disabled={busy}
-            className="bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] border-0"
+            disabled={requestBusy}
+            className="bg-gradient-to-r from-[#8B5CF6] to-[#C084FC] hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] border-0 min-w-[150px]"
           >
-            {busy ? "Working…" : "Encrypt & request"}
+            {requestBusy ? "Working…" : "Encrypt & request"}
           </Button>
         </div>
+        {requestBusy && requestStage && (
+          <div className="flex items-center gap-2 text-[11px] text-[#C084FC] pt-1">
+            <div className="w-3 h-3 rounded-full border-2 border-[#8B5CF6]/30 border-t-[#C084FC] animate-spin" />
+            <span>{requestStageText[requestStage]}</span>
+          </div>
+        )}
       </div>
 
       <div className="pt-4 border-t border-white/5 space-y-2">
@@ -154,13 +199,19 @@ export function RequestAdvanceCard() {
           </div>
           <Button
             onClick={decryptBalance}
-            disabled={busy}
+            disabled={decryptBusy}
             variant="outline"
-            className="bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-[#8B5CF6]/30"
+            className="bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-[#8B5CF6]/30 min-w-[110px]"
           >
-            {busy ? "Decrypting…" : "Decrypt"}
+            {decryptBusy ? "Working…" : "Decrypt"}
           </Button>
         </div>
+        {decryptBusy && decryptStage && (
+          <div className="flex items-center gap-2 text-[11px] text-[#06B6D4] pt-1">
+            <div className="w-3 h-3 rounded-full border-2 border-[#06B6D4]/30 border-t-[#06B6D4] animate-spin" />
+            <span>{decryptStageText[decryptStage]}</span>
+          </div>
+        )}
         {delta !== null && delta > 0n && (
           <div className="text-xs text-[#10B981] flex items-center gap-1.5 pt-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> Approved · disbursed $
