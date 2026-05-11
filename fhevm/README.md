@@ -94,5 +94,4 @@ move real funds through it without an audit.
 ## Hackathon submission
 
 This project targets **Zama Developer Program Mainnet Season 2 — Builder
-Track**. See [docs/PITCH_SCRIPT.md](../docs/PITCH_SCRIPT.md) for the
-3-minute pitch outline.
+Track** under the *FHE integration in existing dApps* category.
