@@ -7,6 +7,7 @@ import {
   ArrowLeft, Zap, BookOpen, Shield, Wallet, FileText, ExternalLink,
   Copy, Check, Users, BarChart3, Lock, PlayCircle, Brain, CheckCircle2,
   ArrowRight, Repeat, Droplets, Coins, Building2, HelpCircle, GitBranch,
+  KeyRound, Eye, ShieldCheck, Gauge, FileBadge2,
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -20,7 +21,41 @@ const NAV_SECTIONS = [
   { id: "analytics", label: "Analytics & AI", icon: Brain },
   { id: "tokens", label: "Tokens & Faucet", icon: Coins },
   { id: "security", label: "Security", icon: Lock },
+  { id: "confidential", label: "Confidential (FHE)", icon: KeyRound },
   { id: "faq", label: "FAQ", icon: HelpCircle },
+];
+
+const CONFIDENTIAL_FLOWS = [
+  {
+    href: "/confidential",
+    name: "Confidential dashboard",
+    desc: "Set encrypted salary · request an encrypted advance",
+    icon: Lock,
+  },
+  {
+    href: "/confidential/roster",
+    name: "Confidential roster",
+    desc: "Batch-pay every employee with encrypted per-employee amounts",
+    icon: Users,
+  },
+  {
+    href: "/confidential/income-prove",
+    name: "Prove your income",
+    desc: "Issue 'salary ≥ X' attestation without revealing the amount",
+    icon: ShieldCheck,
+  },
+  {
+    href: "/confidential/runway",
+    name: "Encrypted runway",
+    desc: "Low-runway alert without publishing your burn rate",
+    icon: Gauge,
+  },
+  {
+    href: "/confidential/positions",
+    name: "Position NFTs",
+    desc: "Transfer encrypted advance positions privately",
+    icon: FileBadge2,
+  },
 ];
 
 const PROTOCOL_LINKS = [
@@ -421,6 +456,89 @@ export default function DocsPage() {
             </div>
           </Section>
 
+          {/* ════════════ CONFIDENTIAL (FHE) ════════════ */}
+          <Section id="confidential" title="Confidential (FHE)" icon={KeyRound}>
+            <p>
+              <strong className="text-white">HashPay Confidential</strong> is a privacy layer for payroll-backed credit. Salary, credit score, and advance amount are encrypted end to end. Underwriting happens entirely under <strong className="text-white">Fully Homomorphic Encryption (FHE)</strong> — no observer learns the values, and no observer learns whether you were approved.
+            </p>
+            <p>
+              It&apos;s built on the <a href="https://docs.zama.ai/protocol" target="_blank" rel="noopener noreferrer" className="text-[#8B5CF6] hover:text-[#C084FC] underline inline-flex items-center gap-1">Zama Protocol (FHEVM) <ExternalLink className="w-3 h-3" /></a> and runs on Ethereum Sepolia. Your HashKey Chain payroll continues to run on its own network — confidential flows live alongside, not in place of, the existing rails.
+            </p>
+
+            <h3 className="text-white font-semibold text-lg mt-6 mb-3">What FHE buys you</h3>
+            <div className="grid md:grid-cols-3 gap-3 my-4">
+              <div className="glass-card rounded-xl p-4">
+                <Lock className="w-4 h-4 text-[#8B5CF6] mb-2" />
+                <div className="text-sm font-semibold text-white">Encrypted on chain</div>
+                <div className="text-xs text-[#9BA3B7] mt-1">Salaries, scores, and amounts never appear in plaintext — not in storage, not in events, not in calldata.</div>
+              </div>
+              <div className="glass-card rounded-xl p-4">
+                <Eye className="w-4 h-4 text-[#06B6D4] mb-2" />
+                <div className="text-sm font-semibold text-white">User-controlled decryption</div>
+                <div className="text-xs text-[#9BA3B7] mt-1">Plaintext is only ever materialized client-side, gated by an EIP-712 signature from the holder.</div>
+              </div>
+              <div className="glass-card rounded-xl p-4">
+                <ShieldCheck className="w-4 h-4 text-[#10B981] mb-2" />
+                <div className="text-sm font-semibold text-white">Approval-secrecy</div>
+                <div className="text-xs text-[#9BA3B7] mt-1">The contract decides under FHE. The chain doesn&apos;t reveal whether the loan was approved or denied.</div>
+              </div>
+            </div>
+
+            <h3 className="text-white font-semibold text-lg mt-6 mb-3">Flows available</h3>
+            <div className="grid md:grid-cols-2 gap-3 my-4">
+              {CONFIDENTIAL_FLOWS.map((flow) => (
+                <a
+                  key={flow.href}
+                  href={flow.href}
+                  className="glass-card p-4 rounded-xl hover:border-[#8B5CF6]/50 transition-all flex items-start gap-3"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#8B5CF6]/15 to-[#C084FC]/5 border border-[#8B5CF6]/20 flex items-center justify-center flex-shrink-0">
+                    <flow.icon className="w-3.5 h-3.5 text-[#C084FC]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-white text-sm">{flow.name}</div>
+                    <div className="text-xs text-[#9BA3B7] mt-0.5">{flow.desc}</div>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#5A6178] mt-1.5 flex-shrink-0" />
+                </a>
+              ))}
+            </div>
+
+            <h3 className="text-white font-semibold text-lg mt-6 mb-3">How a confidential advance works</h3>
+            <ol className="list-none space-y-3 my-4">
+              <li className="flex items-start gap-3">
+                <span className="text-[#8B5CF6] font-bold text-xs mt-1.5 flex-shrink-0">1</span>
+                <span><strong className="text-white">Employer sets encrypted salary.</strong> The amount is encrypted in your browser with the Zama relayer SDK. Only an encrypted handle + ZK proof of correct encryption land on chain. The employer also authorizes the <code className="text-xs bg-[#1C1E3A] px-1.5 py-0.5 rounded">ConfidentialAdvance</code> contract to read the handle.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-[#8B5CF6] font-bold text-xs mt-1.5 flex-shrink-0">2</span>
+                <span><strong className="text-white">Employee requests an advance.</strong> They submit an encrypted requested amount. The contract reads the encrypted salary, the encrypted credit score, and the encrypted requested amount — and decides under FHE.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-[#8B5CF6] font-bold text-xs mt-1.5 flex-shrink-0">3</span>
+                <span><strong className="text-white">Disbursement happens in cUSDT (ERC-7984).</strong> Confidential USDT carries encrypted balances. The borrower decrypts their own balance client-side to learn whether the advance was approved and how much.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-[#8B5CF6] font-bold text-xs mt-1.5 flex-shrink-0">4</span>
+                <span><strong className="text-white">Position is an NFT.</strong> Each advance mints a position NFT with encrypted metadata (principal, rate, status). Transferring the NFT hands off the ACL — and the position — privately.</span>
+              </li>
+            </ol>
+
+            <h3 className="text-white font-semibold text-lg mt-6 mb-3">Trying it</h3>
+            <ul className="space-y-2 list-disc list-inside marker:text-[#8B5CF6]">
+              <li>Switch your wallet to <strong className="text-white">Ethereum Sepolia</strong> (chainId 11155111). HashKey Chain payroll continues to work on its own network — no bridging.</li>
+              <li>Visit <a href="/confidential" className="text-[#8B5CF6] hover:underline">hashpay.tech/confidential</a>. The FHE relayer SDK + Sepolia keys pre-warm in the background while you set up — first action is fast.</li>
+              <li>Pick <strong className="text-white">I&apos;m an employer</strong>, paste a recipient address, and set an encrypted salary. Or pick <strong className="text-white">I&apos;m an employee</strong> and request an encrypted advance against a salary your employer set.</li>
+              <li>Each encrypted action takes ~20–60s on testnet — most of that is the relayer verifying your ZK input proof. The UI shows stage-specific progress so you can see exactly where you are.</li>
+            </ul>
+
+            <div className="glass rounded-xl p-4 mt-6 border-l-2 border-l-[#8B5CF6]/40">
+              <div className="text-xs text-[#9BA3B7]">
+                <strong className="text-white">Architecture note.</strong> The confidential rails live in their own <code className="text-xs bg-[#1C1E3A] px-1.5 py-0.5 rounded">fhevm/</code> workspace and deploy to Sepolia FHEVM. The HashKey Chain contracts under <code className="text-xs bg-[#1C1E3A] px-1.5 py-0.5 rounded">contracts/</code> are unchanged — confidential payroll is an FHE-native extension that composes with HSP, not a replacement.
+              </div>
+            </div>
+          </Section>
+
           {/* ════════════ FAQ ════════════ */}
           <Section id="faq" title="FAQ" icon={HelpCircle}>
             <div className="space-y-3">
@@ -454,6 +572,15 @@ export default function DocsPage() {
               <FAQ q="Is the AI analysis feature using my data externally?">
                 <p>In demo mode, no data is sent anywhere — the analysis is generated locally. When configured with an API key, payroll summary data (not wallet addresses or personal info) is sent to the AI service for analysis.</p>
               </FAQ>
+              <FAQ q="Why does the confidential page need Sepolia, not HashKey Chain?">
+                <p>FHEVM (Zama&apos;s fully homomorphic EVM) currently runs on Ethereum Sepolia. The confidential rails are an FHE-native extension to HashPay, not a replacement — your HashKey Chain payroll continues to settle on HashKey Chain. No bridging is required between the two.</p>
+              </FAQ>
+              <FAQ q="Why does the first encrypted action take 20–60 seconds?">
+                <p>Three things happen on first use: (1) the relayer SDK + ~5MB of WASM load, (2) the Sepolia FHE public key and CRS download, and (3) the relayer verifies a ZK proof of correct encryption for the value you submitted. The /confidential page pre-warms steps 1 and 2 in the background, so most of the wait you see is the relayer round-trip on step 3.</p>
+              </FAQ>
+              <FAQ q="Who can decrypt my encrypted salary or balance?">
+                <p>Only addresses explicitly granted ACL permission on the encrypted handle, and only client-side via a signed EIP-712 request to the Zama relayer. The chain never sees plaintext — neither HashPay, nor a block explorer, nor a future indexer can read the values. Transferring a position NFT hands off ACL permissions to the new holder.</p>
+              </FAQ>
             </div>
           </Section>
 
@@ -465,6 +592,7 @@ export default function DocsPage() {
                 { href: "/", label: "Home", icon: Zap },
                 { href: "/employer", label: "Employer Dashboard", icon: Building2 },
                 { href: "/employee", label: "Employee Dashboard", icon: Users },
+                { href: "/confidential", label: "Confidential (FHE)", icon: KeyRound },
                 { href: "/faucet", label: "Token Faucet", icon: Droplets },
                 { href: "/verify", label: "Verify Payment", icon: CheckCircle2 },
                 { href: "/employer/analytics", label: "Analytics", icon: BarChart3 },
