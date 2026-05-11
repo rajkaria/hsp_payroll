@@ -29,6 +29,9 @@ out/
 # Demo video (large — kept local)
 demo-video/
 
+# Claude Code session workspace (worktrees, transcripts, scratch — multi-GB)
+.claude/
+
 
 # Personal demo notes — not for public repo
 DEMO.md
