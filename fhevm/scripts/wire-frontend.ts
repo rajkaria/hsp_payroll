@@ -27,6 +27,13 @@ function main() {
       c.ConfidentialReputationRegistry,
     NEXT_PUBLIC_CONFIDENTIAL_ADVANCE: c.ConfidentialAdvance,
     NEXT_PUBLIC_PAYROLL_ATTESTOR_MIRROR: c.PayrollAttestorMirror,
+    NEXT_PUBLIC_CONFIDENTIAL_COMPLIANCE: c.ConfidentialCompliance,
+    NEXT_PUBLIC_CONFIDENTIAL_PAYROLL_ROSTER: c.ConfidentialPayrollRoster,
+    NEXT_PUBLIC_INCOME_PROVER: c.IncomeProver,
+    NEXT_PUBLIC_CONFIDENTIAL_EMPLOYER_RUNWAY: c.ConfidentialEmployerRunway,
+    NEXT_PUBLIC_CONFIDENTIAL_ADVANCE_POSITION_NFT:
+      c.ConfidentialAdvancePositionNFT,
+    NEXT_PUBLIC_CONFIDENTIAL_FX_ORACLE: c.ConfidentialFXOracle,
   };
 
   const envPath = path.join(__dirname, "..", "..", "frontend", ".env.local");

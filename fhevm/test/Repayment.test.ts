@@ -3,7 +3,7 @@ import { ethers, fhevm } from "hardhat";
 import { FhevmType } from "@fhevm/hardhat-plugin";
 import type { Signer } from "ethers";
 
-describe("HashPay Confidential — end to end", function () {
+describe("ConfidentialAdvance — repayment + collateral + accrual", function () {
   let owner: Signer;
   let employer: Signer;
   let employee: Signer;
@@ -49,8 +49,8 @@ describe("HashPay Confidential — end to end", function () {
       salaryIndexAddr,
       reputationRegistryAddr,
       cUSDTAddr,
-      600, // minScore
-      3,   // salaryMultiplier
+      600,
+      3,
     ]);
     await advance.waitForDeployment();
     advanceAddr = await advance.getAddress();
@@ -59,12 +59,10 @@ describe("HashPay Confidential — end to end", function () {
     await (await mirror.setReputationRegistry(reputationRegistryAddr)).wait();
     await (await mirror.setRelayer(await owner.getAddress())).wait();
     await (await cUSDT.setMinter(advanceAddr, true)).wait();
-
+    await (await cUSDT.setDebitor(advanceAddr, true)).wait();
     await (await salaryIndex.registerEmployer(employeeAddr, employerAddr)).wait();
-  });
 
-  it("approves an advance when the encrypted score and salary clear the threshold", async () => {
-    // Encrypt salary = 500_000 cents ($5,000)
+    // Encrypted salary 500_000 cents = $5,000.
     const salaryInput = await fhevm
       .createEncryptedInput(salaryIndexAddr, employerAddr)
       .add64(500_000n)
@@ -76,6 +74,7 @@ describe("HashPay Confidential — end to end", function () {
     ).wait();
     await (await salaryIndex.connect(employer).authorizeViewer(employeeAddr, advanceAddr)).wait();
 
+    // Encrypted score 720.
     const scoreInput = await fhevm
       .createEncryptedInput(reputationRegistryAddr, mirrorAddr)
       .add32(720n)
@@ -84,35 +83,71 @@ describe("HashPay Confidential — end to end", function () {
       await mirror.connect(owner).forwardScore(employeeAddr, scoreInput.handles[0], scoreInput.inputProof)
     ).wait();
     await (await reputationRegistry.connect(employee).authorizeViewer(advanceAddr)).wait();
-
-    // Borrower asks for $1,200 (120_000 cents). Salary covers >> 3x.
-    const requestInput = await fhevm
-      .createEncryptedInput(advanceAddr, employeeAddr)
-      .add64(120_000n)
-      .encrypt();
-    await (
-      await advance.connect(employee).requestAdvance(requestInput.handles[0], requestInput.inputProof)
-    ).wait();
-
-    const balanceHandle = await cUSDT.confidentialBalanceOf(employeeAddr);
-    const balance = await fhevm.userDecryptEuint(FhevmType.euint64, balanceHandle, cUSDTAddr, employee);
-    expect(balance).to.equal(120_000n);
   });
 
-  it("denies an advance silently when the requested amount exceeds the salary threshold", async () => {
-    // New borrower (use owner as a fresh address for simplicity).
-    const requestInput = await fhevm
+  it("decrements outstanding under FHE on repay", async () => {
+    // Borrow $1,000.
+    const reqInput = await fhevm
       .createEncryptedInput(advanceAddr, employeeAddr)
-      .add64(10_000_000n) // $100,000 — far exceeds salary * 3
+      .add64(100_000n)
+      .encrypt();
+    await (await advance.connect(employee).requestAdvance(reqInput.handles[0], reqInput.inputProof)).wait();
+
+    let outHandle = await advance.outstandingOf(employeeAddr);
+    let outVal = await fhevm.userDecryptEuint(FhevmType.euint64, outHandle, advanceAddr, employee);
+    expect(outVal).to.equal(100_000n);
+
+    // Repay $400.
+    const repayInput = await fhevm
+      .createEncryptedInput(advanceAddr, employeeAddr)
+      .add64(40_000n)
+      .encrypt();
+    await (await advance.connect(employee).repay(repayInput.handles[0], repayInput.inputProof)).wait();
+
+    outHandle = await advance.outstandingOf(employeeAddr);
+    outVal = await fhevm.userDecryptEuint(FhevmType.euint64, outHandle, advanceAddr, employee);
+    expect(outVal).to.equal(60_000n);
+  });
+
+  it("respects encrypted credit limit", async () => {
+    // Set a tight limit of $500.
+    await (await advance.connect(owner).setCreditLimit(employeeAddr, 50_000n)).wait();
+
+    // Try to borrow $800 (would exceed remaining limit of $440 after $60 outstanding).
+    const reqInput = await fhevm
+      .createEncryptedInput(advanceAddr, employeeAddr)
+      .add64(80_000n)
+      .encrypt();
+    await (await advance.connect(employee).requestAdvance(reqInput.handles[0], reqInput.inputProof)).wait();
+
+    // Outstanding shouldn't have moved.
+    const outHandle = await advance.outstandingOf(employeeAddr);
+    const outVal = await fhevm.userDecryptEuint(FhevmType.euint64, outHandle, advanceAddr, employee);
+    expect(outVal).to.equal(60_000n);
+  });
+
+  it("posts and releases collateral under FHE", async () => {
+    // Mint $2,000 of cUSDT to employee directly.
+    const mintInput = await fhevm
+      .createEncryptedInput(cUSDTAddr, await owner.getAddress())
+      .add64(200_000n)
       .encrypt();
     await (
-      await advance.connect(employee).requestAdvance(requestInput.handles[0], requestInput.inputProof)
+      await cUSDT.connect(owner).confidentialMintFromExternal(employeeAddr, mintInput.handles[0], mintInput.inputProof)
     ).wait();
 
-    // The previous test already credited 120_000. After a denied request,
-    // balance should be unchanged (additional credit = 0).
-    const balanceHandle = await cUSDT.confidentialBalanceOf(employeeAddr);
-    const balance = await fhevm.userDecryptEuint(FhevmType.euint64, balanceHandle, cUSDTAddr, employee);
-    expect(balance).to.equal(120_000n);
+    // Lift the credit limit so the post-collateral path exercises only the salary cap.
+    await (await advance.connect(owner).setCreditLimit(employeeAddr, 10_000_000n)).wait();
+
+    // Post $500 collateral.
+    const postInput = await fhevm
+      .createEncryptedInput(advanceAddr, employeeAddr)
+      .add64(50_000n)
+      .encrypt();
+    await (await advance.connect(employee).postCollateral(postInput.handles[0], postInput.inputProof)).wait();
+
+    const colHandle = await advance.collateralOf(employeeAddr);
+    const colVal = await fhevm.userDecryptEuint(FhevmType.euint64, colHandle, advanceAddr, employee);
+    expect(colVal).to.equal(50_000n);
   });
 });

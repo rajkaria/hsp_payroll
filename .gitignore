@@ -42,3 +42,6 @@ HSP_PAYROLL_HACKATHON_BUILD_SPEC.md
 # Demo seed scripts (contain internal tx patterns)
 contracts/scripts/seed-demo.ts
 contracts/scripts/seed-lender.ts
+
+# Internal Zama roadmap — superseded by ZAMA_INTEGRATION.md, kept local-only
+docs/ZAMA_ROADMAP.md

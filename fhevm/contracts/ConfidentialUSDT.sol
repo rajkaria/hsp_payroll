@@ -8,10 +8,10 @@ import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 /// @notice Minimal ERC-7984-style confidential token used as the cUSDT
 /// settlement asset for HashPay Confidential. Encrypted balances; transfers
 /// reveal neither sender, recipient, nor amount on-chain.
-/// @dev Not a full ERC-7984 implementation — covers the surface area used
-/// by the demo (mint, transfer, balanceOf, internal credit/debit by
-/// authorized protocol contracts). For mainnet a vetted ERC-7984
-/// implementation should be used in place of this contract.
+/// @dev Authorized contracts may also `debit` a user — used by
+/// ConfidentialAdvance for repayment burns and collateral posting. The
+/// debit flow honors the same FHE clamping as transfers (no revealing
+/// revert on insufficient balance).
 contract ConfidentialUSDT is ZamaEthereumConfig {
     string public constant name = "Confidential USDT";
     string public constant symbol = "cUSDT";
@@ -19,14 +19,18 @@ contract ConfidentialUSDT is ZamaEthereumConfig {
 
     address public immutable owner;
     mapping(address => bool) public isMinter;
+    mapping(address => bool) public isDebitor;
     mapping(address => euint64) private _balances;
 
     event MinterUpdated(address indexed minter, bool allowed);
+    event DebitorUpdated(address indexed debitor, bool allowed);
     event ConfidentialTransfer(address indexed from, address indexed to);
     event ConfidentialMint(address indexed to);
+    event ConfidentialBurn(address indexed from);
 
     error NotOwner();
     error NotMinter();
+    error NotDebitor();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert NotOwner();
@@ -35,6 +39,11 @@ contract ConfidentialUSDT is ZamaEthereumConfig {
 
     modifier onlyMinter() {
         if (!isMinter[msg.sender]) revert NotMinter();
+        _;
+    }
+
+    modifier onlyDebitor() {
+        if (!isDebitor[msg.sender]) revert NotDebitor();
         _;
     }
 
@@ -48,15 +57,17 @@ contract ConfidentialUSDT is ZamaEthereumConfig {
         emit MinterUpdated(minter, allowed);
     }
 
-    /// @notice Mint encrypted tokens to an address. Used by the protocol
-    /// owner to fund the ConfidentialAdvance pool, and by ConfidentialAdvance
-    /// to disburse approved advances.
+    function setDebitor(address debitor, bool allowed) external onlyOwner {
+        isDebitor[debitor] = allowed;
+        emit DebitorUpdated(debitor, allowed);
+    }
+
+    /// @notice Mint encrypted tokens to an address.
     function confidentialMint(address to, euint64 amount) external onlyMinter {
         _credit(to, amount);
         emit ConfidentialMint(to);
     }
 
-    /// @notice Mint with an external input (caller-encrypted amount).
     function confidentialMintFromExternal(
         address to,
         externalEuint64 encryptedAmount,
@@ -67,9 +78,25 @@ contract ConfidentialUSDT is ZamaEthereumConfig {
         emit ConfidentialMint(to);
     }
 
-    /// @notice Transfer encrypted tokens. The amount is encrypted and the
-    /// underflow case is handled by clamping the transferred amount to the
-    /// sender's balance (no revealing revert).
+    /// @notice Burn an encrypted amount from a user. Used by repayment and
+    /// collateral flows. Returns the actual amount burned (clamped to the
+    /// user's balance under FHE).
+    function debit(address from, euint64 amount) external onlyDebitor returns (euint64 actual) {
+        euint64 bal = _balances[from];
+        ebool sufficient = FHE.ge(bal, amount);
+        actual = FHE.select(sufficient, amount, bal);
+        euint64 next = FHE.sub(bal, actual);
+        _balances[from] = next;
+        FHE.allowThis(next);
+        FHE.allow(next, from);
+        FHE.allowThis(actual);
+        FHE.allow(actual, from);
+        FHE.allow(actual, msg.sender);
+        emit ConfidentialBurn(from);
+        return actual;
+    }
+
+    /// @notice Transfer encrypted tokens.
     function confidentialTransfer(
         address to,
         externalEuint64 encryptedAmount,
@@ -79,13 +106,10 @@ contract ConfidentialUSDT is ZamaEthereumConfig {
         return _internalTransfer(msg.sender, to, amount);
     }
 
-    /// @notice Returns the encrypted balance handle for an account. The
-    /// caller must hold ACL permission on the handle to decrypt it.
     function confidentialBalanceOf(address account) external view returns (euint64) {
         return _balances[account];
     }
 
-    /// @notice Authorize another address to read the caller's balance handle.
     function authorizeBalanceViewer(address viewer) external {
         euint64 balance = _balances[msg.sender];
         FHE.allow(balance, viewer);

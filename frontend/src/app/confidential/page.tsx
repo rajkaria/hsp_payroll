@@ -111,6 +111,38 @@ export default function ConfidentialPage() {
           </div>
         )}
 
+        <Card>
+          <CardHeader>
+            <CardTitle>More confidential flows</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <a href="/confidential/roster" className="rounded-md border px-4 py-3 hover:bg-muted/30">
+              <div className="text-sm font-medium">Confidential roster</div>
+              <div className="text-xs text-muted-foreground">
+                Pay every employee in one transaction with encrypted amounts.
+              </div>
+            </a>
+            <a href="/confidential/income-prove" className="rounded-md border px-4 py-3 hover:bg-muted/30">
+              <div className="text-sm font-medium">Prove your income</div>
+              <div className="text-xs text-muted-foreground">
+                Issue a "salary ≥ X" attestation to a verifier without revealing the amount.
+              </div>
+            </a>
+            <a href="/confidential/runway" className="rounded-md border px-4 py-3 hover:bg-muted/30">
+              <div className="text-sm font-medium">Encrypted runway</div>
+              <div className="text-xs text-muted-foreground">
+                Track payroll runway without publishing burn rate.
+              </div>
+            </a>
+            <a href="/confidential/positions" className="rounded-md border px-4 py-3 hover:bg-muted/30">
+              <div className="text-sm font-medium">Position NFTs</div>
+              <div className="text-xs text-muted-foreground">
+                View and transfer encrypted advance positions.
+              </div>
+            </a>
+          </CardContent>
+        </Card>
+
         <footer className="text-xs text-muted-foreground border-t pt-6 space-y-1">
           <div>
             Submission for the Zama Developer Program — Season 2, Builder
