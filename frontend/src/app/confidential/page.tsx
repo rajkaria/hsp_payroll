@@ -2,24 +2,70 @@
 
 import { useState } from "react";
 import { useAccount, useChainId } from "wagmi";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { ConnectGate } from "@/components/connect-gate";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConnectButton } from "@/components/connect-button";
 import { Input } from "@/components/ui/input";
-import { Lock, Shield, Eye } from "lucide-react";
+import {
+  Lock,
+  Shield,
+  Eye,
+  ArrowLeft,
+  Users,
+  FileBadge2,
+  Gauge,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
 import { SalaryViewCard } from "@/components/confidential/SalaryViewCard";
 import { RequestAdvanceCard } from "@/components/confidential/RequestAdvanceCard";
 import { FHEVM_CHAIN_ID } from "@/lib/fhevm/contracts";
 
-/**
- * /confidential
- *
- * HashPay Confidential dashboard. Lives entirely on Sepolia FHEVM. The
- * existing employer / employee dashboards on HashKey Chain are
- * untouched.
- */
+function SectionLabel({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="flex items-baseline justify-between px-1">
+      <h2 className="text-[11px] uppercase tracking-widest text-[#9BA3B7] font-semibold">
+        {title}
+      </h2>
+      {hint && (
+        <span className="text-[10px] text-[#5A6178] hidden sm:block">{hint}</span>
+      )}
+    </div>
+  );
+}
+
+const FLOWS = [
+  {
+    href: "/confidential/roster",
+    icon: Users,
+    title: "Confidential roster",
+    description: "Pay every employee in one tx with encrypted amounts.",
+  },
+  {
+    href: "/confidential/income-prove",
+    icon: ShieldCheck,
+    title: "Prove your income",
+    description: "Issue a 'salary ≥ X' attestation without revealing the amount.",
+  },
+  {
+    href: "/confidential/runway",
+    icon: Gauge,
+    title: "Encrypted runway",
+    description: "Track payroll runway without publishing your burn rate.",
+  },
+  {
+    href: "/confidential/positions",
+    icon: FileBadge2,
+    title: "Position NFTs",
+    description: "View and transfer encrypted advance positions.",
+  },
+];
+
 export default function ConfidentialPage() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const router = useRouter();
   const [mode, setMode] = useState<"employer" | "employee">("employee");
   const [counterparty, setCounterparty] = useState("");
 
@@ -42,134 +88,183 @@ export default function ConfidentialPage() {
   }
 
   return (
-    <>
-      <div className="container mx-auto max-w-4xl py-10 space-y-8">
-        <header className="space-y-3">
-          <div className="flex items-center gap-2 text-emerald-500 text-xs uppercase tracking-wider">
-            <Shield className="size-3" /> Built on Zama Protocol — FHEVM
+    <div className="min-h-screen relative">
+      <div className="fixed inset-0 bg-grid pointer-events-none" />
+      <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[#8B5CF6]/[0.05] rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-[#06B6D4]/[0.04] rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto px-6 py-8 relative">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10"
+        >
+          <div>
+            <button
+              onClick={() => router.push("/")}
+              className="flex items-center gap-1.5 text-sm text-[#5A6178] hover:text-white transition-colors mb-3"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back
+            </button>
+            <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#8B5CF6] font-medium bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 rounded-full px-3 py-1 mb-3">
+              <Shield className="w-3 h-3" /> FHE-native rails
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold font-[family-name:var(--font-space-grotesk)] tracking-tight">
+              HashPay <span className="gradient-text">Confidential</span>
+            </h1>
+            <p className="text-[#9BA3B7] mt-2 text-sm max-w-2xl leading-relaxed">
+              Privacy-preserving payroll-backed credit. Salary, credit score, and
+              advance amount are encrypted end to end. Underwriting happens entirely
+              under FHE — no observer learns the values, nor whether you were
+              approved.
+            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#9BA3B7] bg-white/[0.03] border border-white/5 rounded-full px-2.5 py-1">
+                <Lock className="w-2.5 h-2.5 text-[#8B5CF6]" /> Encrypted on chain
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#9BA3B7] bg-white/[0.03] border border-white/5 rounded-full px-2.5 py-1">
+                <Eye className="w-2.5 h-2.5 text-[#06B6D4]" /> User-controlled decryption
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#9BA3B7] bg-white/[0.03] border border-white/5 rounded-full px-2.5 py-1">
+                <span className="w-1 h-1 rounded-full bg-[#10B981]" /> cUSDT (ERC-7984)
+              </span>
+            </div>
           </div>
-          <h1 className="text-4xl font-semibold tracking-tight">
-            HashPay Confidential
-          </h1>
-          <p className="text-muted-foreground max-w-2xl">
-            Privacy-preserving payroll-backed credit. Salary, credit score,
-            and advance amount are all encrypted end to end. Underwriting
-            happens entirely under FHE — no observer learns the values, and
-            no observer learns whether you were approved.
-          </p>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full bg-muted px-2 py-1 flex items-center gap-1">
-              <Lock className="size-3" /> Encrypted on chain
-            </span>
-            <span className="rounded-full bg-muted px-2 py-1 flex items-center gap-1">
-              <Eye className="size-3" /> User-controlled decryption
-            </span>
-            <span className="rounded-full bg-muted px-2 py-1">
-              Settles in cUSDT (ERC-7984)
-            </span>
-            <span className="rounded-full bg-muted px-2 py-1">
-              HSK side untouched
-            </span>
-          </div>
-        </header>
+          <ConnectButton />
+        </motion.div>
 
         {onWrongChain && (
-          <Card className="border-amber-500/40">
-            <CardContent className="pt-6">
-              <p className="text-sm">
-                Connect to <strong>Sepolia (chainId 11155111)</strong> to
-                use the confidential dApp. Your HashKey Chain payroll
-                continues to run on its own network — no bridging required.
-              </p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-2xl p-5 mb-8 border-l-2 border-l-amber-500/60"
+          >
+            <p className="text-sm text-[#E7C97F]">
+              Connect to <strong>Sepolia (chainId 11155111)</strong> to use the
+              confidential dApp. Your HashKey Chain payroll continues to run on
+              its own network — no bridging required.
+            </p>
+          </motion.div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Mode</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setMode("employee")}
-                className={`flex-1 rounded-md border px-4 py-2 text-sm ${mode === "employee" ? "border-primary bg-primary/10" : "border-muted"}`}
-              >
-                I&apos;m an employee — request an advance
-              </button>
-              <button
-                onClick={() => setMode("employer")}
-                className={`flex-1 rounded-md border px-4 py-2 text-sm ${mode === "employer" ? "border-primary bg-primary/10" : "border-muted"}`}
-              >
-                I&apos;m an employer — set encrypted salaries
-              </button>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">
-                {mode === "employer" ? "Employee address" : "Employer address"}
-              </label>
-              <Input
-                placeholder="0x…"
-                value={counterparty}
-                onChange={(e) => setCounterparty(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {address && counterparty.startsWith("0x") && counterparty.length === 42 && (
-          <div className="grid gap-6 md:grid-cols-2">
-            <SalaryViewCard
-              mode={mode}
-              counterpartyAddress={counterparty as `0x${string}`}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-8"
+        >
+          <section className="space-y-3">
+            <SectionLabel
+              title="Mode"
+              hint="Switch between employer and employee flows"
             />
-            {mode === "employee" && <RequestAdvanceCard />}
-          </div>
-        )}
+            <div className="glass rounded-2xl p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => setMode("employee")}
+                  className={`rounded-xl px-4 py-3 text-sm font-medium text-left transition-all ${
+                    mode === "employee"
+                      ? "bg-gradient-to-r from-[#8B5CF6]/20 to-[#C084FC]/10 border border-[#8B5CF6]/40 text-white shadow-[0_0_20px_rgba(139,92,246,0.15)]"
+                      : "bg-white/[0.02] border border-white/5 text-[#9BA3B7] hover:text-white hover:border-white/10"
+                  }`}
+                >
+                  <div className="font-semibold">I&apos;m an employee</div>
+                  <div className="text-xs mt-0.5 opacity-80">
+                    Request an encrypted advance
+                  </div>
+                </button>
+                <button
+                  onClick={() => setMode("employer")}
+                  className={`rounded-xl px-4 py-3 text-sm font-medium text-left transition-all ${
+                    mode === "employer"
+                      ? "bg-gradient-to-r from-[#8B5CF6]/20 to-[#C084FC]/10 border border-[#8B5CF6]/40 text-white shadow-[0_0_20px_rgba(139,92,246,0.15)]"
+                      : "bg-white/[0.02] border border-white/5 text-[#9BA3B7] hover:text-white hover:border-white/10"
+                  }`}
+                >
+                  <div className="font-semibold">I&apos;m an employer</div>
+                  <div className="text-xs mt-0.5 opacity-80">
+                    Set encrypted salaries
+                  </div>
+                </button>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] uppercase tracking-widest text-[#9BA3B7] font-semibold">
+                  {mode === "employer" ? "Employee address" : "Employer address"}
+                </label>
+                <Input
+                  placeholder="0x…"
+                  value={counterparty}
+                  onChange={(e) => setCounterparty(e.target.value)}
+                  className="bg-white/[0.02] border-white/5 focus-visible:border-[#8B5CF6]/40"
+                />
+              </div>
+            </div>
+          </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>More confidential flows</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <a href="/confidential/roster" className="rounded-md border px-4 py-3 hover:bg-muted/30">
-              <div className="text-sm font-medium">Confidential roster</div>
-              <div className="text-xs text-muted-foreground">
-                Pay every employee in one transaction with encrypted amounts.
-              </div>
-            </a>
-            <a href="/confidential/income-prove" className="rounded-md border px-4 py-3 hover:bg-muted/30">
-              <div className="text-sm font-medium">Prove your income</div>
-              <div className="text-xs text-muted-foreground">
-                Issue a "salary ≥ X" attestation to a verifier without revealing the amount.
-              </div>
-            </a>
-            <a href="/confidential/runway" className="rounded-md border px-4 py-3 hover:bg-muted/30">
-              <div className="text-sm font-medium">Encrypted runway</div>
-              <div className="text-xs text-muted-foreground">
-                Track payroll runway without publishing burn rate.
-              </div>
-            </a>
-            <a href="/confidential/positions" className="rounded-md border px-4 py-3 hover:bg-muted/30">
-              <div className="text-sm font-medium">Position NFTs</div>
-              <div className="text-xs text-muted-foreground">
-                View and transfer encrypted advance positions.
-              </div>
-            </a>
-          </CardContent>
-        </Card>
+          {address &&
+            counterparty.startsWith("0x") &&
+            counterparty.length === 42 && (
+              <section className="space-y-3">
+                <SectionLabel
+                  title="Encrypted Operations"
+                  hint="All values encrypted client-side · decryption requires your signature"
+                />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <SalaryViewCard
+                    mode={mode}
+                    counterpartyAddress={counterparty as `0x${string}`}
+                  />
+                  {mode === "employee" && <RequestAdvanceCard />}
+                </div>
+              </section>
+            )}
 
-        <footer className="text-xs text-muted-foreground border-t pt-6 space-y-1">
-          <div>
-            Submission for the Zama Developer Program — Season 2, Builder
-            Track.
+          <section className="space-y-3">
+            <SectionLabel
+              title="More Confidential Flows"
+              hint="Composable FHE primitives across the payroll lifecycle"
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {FLOWS.map((flow, i) => {
+                const Icon = flow.icon;
+                return (
+                  <motion.a
+                    key={flow.href}
+                    href={flow.href}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 + i * 0.05 }}
+                    className="glass rounded-2xl p-5 group hover:border-[#8B5CF6]/30 transition-all hover:shadow-[0_0_20px_rgba(139,92,246,0.08)]"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#8B5CF6]/15 to-[#C084FC]/5 border border-[#8B5CF6]/20 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-[#C084FC]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-semibold text-white">
+                            {flow.title}
+                          </div>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#5A6178] group-hover:text-[#C084FC] group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                        <div className="text-xs text-[#9BA3B7] mt-1 leading-relaxed">
+                          {flow.description}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.a>
+                );
+              })}
+            </div>
+          </section>
+
+          <div className="text-xs text-[#5A6178] text-center pt-4">
+            Confidential rails settle on Sepolia · HSP payroll on HashKey Chain
+            continues untouched
           </div>
-          <div>
-            Source: <code>fhevm/</code> workspace; HSK contracts under{" "}
-            <code>contracts/</code> are unchanged.
-          </div>
-        </footer>
+        </motion.div>
       </div>
-    </>
+    </div>
   );
 }
