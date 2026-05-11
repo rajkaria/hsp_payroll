@@ -32,6 +32,19 @@ export default function ConfidentialRunwayPage() {
   const { writeContractAsync } = useWriteContract();
   const onWrongChain = isConnected && chainId !== FHEVM_CHAIN_ID;
 
+  if (!isConnected) {
+    return (
+      <ConnectGate
+        eyebrow="Confidential"
+        title="Confidential"
+        highlight="runway"
+        message="Track payroll runway without publishing your burn rate. Balance and per-cycle total stay encrypted."
+        backHref="/confidential"
+        backLabel="Back to Confidential"
+      />
+    );
+  }
+
   async function setTotal() {
     if (!address) return;
     setBusy(true);
@@ -74,7 +87,7 @@ export default function ConfidentialRunwayPage() {
   }
 
   return (
-    <ConnectGate>
+    <>
       <div className="container mx-auto max-w-3xl py-10 space-y-6">
         <header>
           <div className="flex items-center gap-2 text-emerald-500 text-xs uppercase tracking-wider">
@@ -127,6 +140,6 @@ export default function ConfidentialRunwayPage() {
           </CardContent>
         </Card>
       </div>
-    </ConnectGate>
+    </>
   );
 }

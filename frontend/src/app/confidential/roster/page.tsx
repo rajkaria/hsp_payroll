@@ -35,6 +35,19 @@ export default function ConfidentialRosterPage() {
   const onWrongChain = isConnected && chainId !== FHEVM_CHAIN_ID;
   const append = (s: string) => setLog((l) => [...l, s]);
 
+  if (!isConnected) {
+    return (
+      <ConnectGate
+        eyebrow="Confidential"
+        title="Confidential"
+        highlight="Roster"
+        message="Pay every employee in one transaction without revealing per-employee amounts or the total."
+        backHref="/confidential"
+        backLabel="Back to Confidential"
+      />
+    );
+  }
+
   async function createRoster() {
     setBusy(true);
     try {
@@ -88,7 +101,7 @@ export default function ConfidentialRosterPage() {
   }
 
   return (
-    <ConnectGate>
+    <>
       <div className="container mx-auto max-w-3xl py-10 space-y-6">
         <header>
           <div className="flex items-center gap-2 text-emerald-500 text-xs uppercase tracking-wider">
@@ -150,6 +163,6 @@ export default function ConfidentialRosterPage() {
           </CardContent>
         </Card>
       </div>
-    </ConnectGate>
+    </>
   );
 }

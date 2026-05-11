@@ -34,7 +34,21 @@ export default function ConfidentialPositionsPage() {
     abi: ConfidentialAdvancePositionNFTAbi,
     functionName: "ownerOf",
     args: [BigInt(tokenId || "1")],
+    query: { enabled: isConnected },
   });
+
+  if (!isConnected) {
+    return (
+      <ConnectGate
+        eyebrow="Confidential"
+        title="Encrypted"
+        highlight="positions"
+        message="Each advance is represented as an NFT with encrypted metadata. Transfer to hand off the position privately."
+        backHref="/confidential"
+        backLabel="Back to Confidential"
+      />
+    );
+  }
 
   async function transfer() {
     if (!address) return;
@@ -52,7 +66,7 @@ export default function ConfidentialPositionsPage() {
   }
 
   return (
-    <ConnectGate>
+    <>
       <div className="container mx-auto max-w-3xl py-10 space-y-6">
         <header>
           <div className="flex items-center gap-2 text-emerald-500 text-xs uppercase tracking-wider">
@@ -98,6 +112,6 @@ export default function ConfidentialPositionsPage() {
           </CardContent>
         </Card>
       </div>
-    </ConnectGate>
+    </>
   );
 }

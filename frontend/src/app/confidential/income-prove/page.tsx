@@ -30,6 +30,19 @@ export default function IncomeProvePage() {
   const { writeContractAsync } = useWriteContract();
   const onWrongChain = isConnected && chainId !== FHEVM_CHAIN_ID;
 
+  if (!isConnected) {
+    return (
+      <ConnectGate
+        eyebrow="Confidential"
+        title="Prove your"
+        highlight="income"
+        message="Issue a 'salary ≥ threshold' attestation to a specific verifier — without revealing the underlying amount."
+        backHref="/confidential"
+        backLabel="Back to Confidential"
+      />
+    );
+  }
+
   async function prove() {
     setBusy(true);
     try {
@@ -47,7 +60,7 @@ export default function IncomeProvePage() {
   }
 
   return (
-    <ConnectGate>
+    <>
       <div className="container mx-auto max-w-3xl py-10 space-y-6">
         <header>
           <div className="flex items-center gap-2 text-emerald-500 text-xs uppercase tracking-wider">
@@ -90,6 +103,6 @@ export default function IncomeProvePage() {
           </CardContent>
         </Card>
       </div>
-    </ConnectGate>
+    </>
   );
 }

@@ -25,8 +25,24 @@ export default function ConfidentialPage() {
 
   const onWrongChain = isConnected && chainId !== FHEVM_CHAIN_ID;
 
+  if (!isConnected) {
+    return (
+      <ConnectGate
+        eyebrow="HashPay Confidential"
+        title="Privacy-preserving"
+        highlight="payroll credit"
+        message="Connect your wallet to view encrypted salary, request a confidential advance, and use FHE-gated underwriting on Sepolia."
+        features={[
+          { label: "Encrypted on chain", color: "#8B5CF6" },
+          { label: "User-controlled decryption", color: "#06B6D4" },
+          { label: "ERC-7984 cUSDT", color: "#10B981" },
+        ]}
+      />
+    );
+  }
+
   return (
-    <ConnectGate>
+    <>
       <div className="container mx-auto max-w-4xl py-10 space-y-8">
         <header className="space-y-3">
           <div className="flex items-center gap-2 text-emerald-500 text-xs uppercase tracking-wider">
@@ -154,6 +170,6 @@ export default function ConfidentialPage() {
           </div>
         </footer>
       </div>
-    </ConnectGate>
+    </>
   );
 }

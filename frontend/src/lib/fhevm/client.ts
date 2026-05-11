@@ -1,17 +1,59 @@
 /**
  * Zama relayer-SDK client for HashPay Confidential.
  *
- * Lazily initializes a singleton FhevmInstance bound to Sepolia (chain
- * 11155111). The SDK pulls public FHE keys + the network config, and
- * exposes:
- *   - createEncryptedInput(contract, user) — for encrypting user inputs
- *     before sending them to a contract.
- *   - userDecrypt(handle, contract, signer) — for decrypting a
- *     ciphertext the caller has ACL permission on.
- *
- * The SDK requires the dynamic import to keep it out of the SSR bundle.
+ * Lazily injects the Zama UMD bundle from jsDelivr (rather than
+ * importing `@zama-fhe/relayer-sdk/web`, which pulls 5MB+ of WASM
+ * through Turbopack and stalls the production build). The UMD ships
+ * its own WASM loader and exposes `window.relayerSDK` once loaded.
  */
 import type { FhevmInstance } from "@zama-fhe/relayer-sdk/web";
+
+const SDK_VERSION = "0.4.1";
+const SDK_URL = `https://cdn.jsdelivr.net/npm/@zama-fhe/relayer-sdk@${SDK_VERSION}/bundle/relayer-sdk-js.umd.cjs`;
+
+type RelayerSDK = {
+  initSDK: () => Promise<void>;
+  createInstance: (config: Record<string, unknown>) => Promise<FhevmInstance>;
+  SepoliaConfig: Record<string, unknown>;
+};
+
+declare global {
+  interface Window {
+    relayerSDK?: RelayerSDK;
+  }
+}
+
+let scriptPromise: Promise<RelayerSDK> | null = null;
+
+function loadRelayerSDK(): Promise<RelayerSDK> {
+  if (scriptPromise) return scriptPromise;
+  scriptPromise = new Promise<RelayerSDK>((resolve, reject) => {
+    if (window.relayerSDK) return resolve(window.relayerSDK);
+
+    const finish = () => {
+      if (window.relayerSDK) resolve(window.relayerSDK);
+      else reject(new Error("Zama relayer SDK loaded but window.relayerSDK is undefined"));
+    };
+
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[data-zama-relayer-sdk]`,
+    );
+    if (existing) {
+      existing.addEventListener("load", finish, { once: true });
+      existing.addEventListener("error", () => reject(new Error("Failed to load Zama relayer SDK")), { once: true });
+      return;
+    }
+
+    const s = document.createElement("script");
+    s.src = SDK_URL;
+    s.async = true;
+    s.dataset.zamaRelayerSdk = "true";
+    s.onload = finish;
+    s.onerror = () => reject(new Error(`Failed to load Zama relayer SDK from ${SDK_URL}`));
+    document.head.appendChild(s);
+  });
+  return scriptPromise;
+}
 
 let instancePromise: Promise<FhevmInstance> | null = null;
 
@@ -22,7 +64,7 @@ export async function getFhevmInstance(): Promise<FhevmInstance> {
   if (instancePromise) return instancePromise;
 
   instancePromise = (async () => {
-    const sdk = await import("@zama-fhe/relayer-sdk/web");
+    const sdk = await loadRelayerSDK();
     await sdk.initSDK();
     const instance = await sdk.createInstance({
       ...sdk.SepoliaConfig,
@@ -89,20 +131,24 @@ export async function userDecryptUint(
   const fhe = await getFhevmInstance();
   const keypair = fhe.generateKeypair();
   const handleContractPairs = [{ handle, contractAddress }];
-  const startTimeStamp = Math.floor(Date.now() / 1000).toString();
-  const durationDays = "1";
+  const startTimestamp = Math.floor(Date.now() / 1000);
+  const durationDays = 1;
   const contractAddresses = [contractAddress];
 
   const eip712 = fhe.createEIP712(
     keypair.publicKey,
     contractAddresses,
-    startTimeStamp,
+    startTimestamp,
     durationDays,
   );
 
   const signature = await signer.signTypedData({
     domain: eip712.domain,
-    types: { UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification },
+    types: {
+      UserDecryptRequestVerification: [
+        ...eip712.types.UserDecryptRequestVerification,
+      ],
+    },
     primaryType: "UserDecryptRequestVerification",
     message: eip712.message,
   });
@@ -114,7 +160,7 @@ export async function userDecryptUint(
     signature.replace("0x", ""),
     contractAddresses,
     signer.address,
-    startTimeStamp,
+    startTimestamp,
     durationDays,
   );
 
