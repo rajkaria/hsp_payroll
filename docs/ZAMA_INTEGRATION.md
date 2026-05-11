@@ -270,8 +270,7 @@ frontend/src/
 docs/
 ├── ZAMA_INTEGRATION.md           (this file)
 ├── SCORING_SPEC.md               (relayer scoring formula + hash)
-├── ARCHITECTURE_CONFIDENTIAL.md
-└── PITCH_SCRIPT.md
+└── ARCHITECTURE_CONFIDENTIAL.md
 ```
 
 ## Test coverage

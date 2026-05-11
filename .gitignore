@@ -45,3 +45,9 @@ contracts/scripts/seed-lender.ts
 
 # Internal Zama roadmap — superseded by ZAMA_INTEGRATION.md, kept local-only
 docs/ZAMA_ROADMAP.md
+
+# Internal pitch + planning docs — not relevant for public/hackathon submission
+PROJECT_BRIEF.md
+docs/PITCH_SCRIPT.md
+docs/SUBMISSION_CHECKLIST.md
+docs/superpowers/
