@@ -17,7 +17,9 @@ import {
 type RequestStage =
   | null
   | "signing-auth"
-  | "encrypting"
+  | "awaiting-sdk"
+  | "building-proof"
+  | "submitting-to-relayer"
   | "signing-request"
   | "done";
 
@@ -30,7 +32,9 @@ type DecryptStage =
 
 const requestStageText: Record<Exclude<RequestStage, null | "done">, string> = {
   "signing-auth": "Confirm reputation viewer auth in wallet…",
-  encrypting: "Encrypting & proving via relayer (20–60s)…",
+  "awaiting-sdk": "Waiting for FHE SDK to warm up…",
+  "building-proof": "Computing ZK proof locally…",
+  "submitting-to-relayer": "Sending proof to Zama relayer…",
   "signing-request": "Confirm requestAdvance in wallet…",
 };
 
@@ -71,11 +75,17 @@ export function RequestAdvanceCard() {
       });
       toast.message("Authorized advance contract", { description: authHash });
 
-      setRequestStage("encrypting");
+      setRequestStage("awaiting-sdk");
       const { handle, proof } = await encryptUint64(
         FHEVM_ADDRESSES.ConfidentialAdvance,
         address,
         cents,
+        (phase) => {
+          if (phase === "awaiting-sdk") setRequestStage("awaiting-sdk");
+          else if (phase === "building-proof") setRequestStage("building-proof");
+          else if (phase === "submitting-to-relayer")
+            setRequestStage("submitting-to-relayer");
+        },
       );
 
       setRequestStage("signing-request");

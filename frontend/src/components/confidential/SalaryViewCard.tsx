@@ -14,7 +14,9 @@ import {
 
 type SetStage =
   | null
-  | "encrypting"
+  | "awaiting-sdk"
+  | "building-proof"
+  | "submitting-to-relayer"
   | "signing-set"
   | "signing-auth"
   | "done";
@@ -27,7 +29,9 @@ type DecryptStage =
   | "done";
 
 const setStageText: Record<Exclude<SetStage, null | "done">, string> = {
-  encrypting: "Encrypting & proving…",
+  "awaiting-sdk": "Waiting for FHE SDK to warm up…",
+  "building-proof": "Computing ZK proof locally…",
+  "submitting-to-relayer": "Sending proof to Zama relayer…",
   "signing-set": "Confirm setSalary in wallet…",
   "signing-auth": "Confirm viewer auth in wallet…",
 };
@@ -64,12 +68,22 @@ export function SalaryViewCard({
       toast.error("Enter a salary greater than zero");
       return;
     }
+    const t0 = performance.now();
     try {
-      setSetStage("encrypting");
+      setSetStage("awaiting-sdk");
       const { handle, proof } = await encryptUint64(
         FHEVM_ADDRESSES.ConfidentialSalaryIndex,
         address,
         cents,
+        (phase) => {
+          if (phase === "awaiting-sdk") setSetStage("awaiting-sdk");
+          else if (phase === "building-proof") setSetStage("building-proof");
+          else if (phase === "submitting-to-relayer")
+            setSetStage("submitting-to-relayer");
+        },
+      );
+      console.info(
+        `[salary] encrypt total ${Math.round(performance.now() - t0)}ms`,
       );
 
       setSetStage("signing-set");
@@ -176,9 +190,9 @@ export function SalaryViewCard({
             <div className="flex items-center gap-2 text-[11px] text-[#C084FC] pt-1">
               <div className="w-3 h-3 rounded-full border-2 border-[#8B5CF6]/30 border-t-[#C084FC] animate-spin" />
               <span>{setStageText[setStage]}</span>
-              {setStage === "encrypting" ? (
+              {setStage === "submitting-to-relayer" ? (
                 <span className="text-[#5A6178]">
-                  · this step talks to the FHE relayer, can take 20–60s
+                  · 20–60s typical on Sepolia
                 </span>
               ) : null}
             </div>

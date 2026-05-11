@@ -87,6 +87,34 @@ function loadRelayerSDK(): Promise<RelayerSDK> {
 
 let instancePromise: Promise<FhevmInstance> | null = null;
 
+/**
+ * Subscribe to FHE init progress. The Zama SDK doesn't expose progress
+ * events, so we surface the four phases we can observe: script load,
+ * initSDK (WASM compile + worker pool), createInstance (Sepolia public
+ * key + CRS download), ready.
+ */
+export type FhevmInitPhase =
+  | { phase: "loading-script"; elapsedMs: number }
+  | { phase: "init-sdk"; elapsedMs: number; threads: number | "single" }
+  | { phase: "create-instance"; elapsedMs: number }
+  | { phase: "ready"; totalMs: number; threads: number | "single" }
+  | { phase: "error"; elapsedMs: number; message: string };
+
+const initListeners = new Set<(p: FhevmInitPhase) => void>();
+export function onFhevmInit(cb: (p: FhevmInitPhase) => void) {
+  initListeners.add(cb);
+  return () => initListeners.delete(cb);
+}
+function emit(p: FhevmInitPhase) {
+  for (const l of initListeners) {
+    try {
+      l(p);
+    } catch {
+      // listener errors are non-fatal
+    }
+  }
+}
+
 export async function getFhevmInstance(): Promise<FhevmInstance> {
   if (typeof window === "undefined") {
     throw new Error("getFhevmInstance can only run in the browser");
@@ -94,26 +122,76 @@ export async function getFhevmInstance(): Promise<FhevmInstance> {
   if (instancePromise) return instancePromise;
 
   instancePromise = (async () => {
-    const sdk = await loadRelayerSDK();
-    // Multi-threaded WASM if the page is cross-origin isolated
-    // (COOP/COEP set) AND SharedArrayBuffer is available. Otherwise
-    // initSDK silently falls back to single-threaded.
-    const threads =
-      typeof crossOriginIsolated !== "undefined" &&
-      crossOriginIsolated &&
-      typeof SharedArrayBuffer !== "undefined"
-        ? Math.min(navigator.hardwareConcurrency || 4, 8)
-        : undefined;
-    await sdk.initSDK(threads ? { thread: threads } : undefined);
-    const instance = await sdk.createInstance({
-      ...sdk.SepoliaConfig,
-      network: window.ethereum,
-    });
-    return instance;
+    const t0 = performance.now();
+    try {
+      emit({ phase: "loading-script", elapsedMs: 0 });
+      const sdk = await loadRelayerSDK();
+      const tScript = performance.now();
+      console.info(
+        `[fhevm] SDK script loaded in ${Math.round(tScript - t0)}ms`,
+      );
+
+      const isolated =
+        typeof crossOriginIsolated !== "undefined" && crossOriginIsolated;
+      const hasSAB = typeof SharedArrayBuffer !== "undefined";
+      const threads =
+        isolated && hasSAB
+          ? Math.min(navigator.hardwareConcurrency || 4, 8)
+          : undefined;
+      console.info(
+        `[fhevm] crossOriginIsolated=${isolated} SAB=${hasSAB} threads=${threads ?? "single"}`,
+      );
+
+      emit({
+        phase: "init-sdk",
+        elapsedMs: Math.round(tScript - t0),
+        threads: threads ?? "single",
+      });
+      await sdk.initSDK(threads ? { thread: threads } : undefined);
+      const tInit = performance.now();
+      console.info(`[fhevm] initSDK done in ${Math.round(tInit - tScript)}ms`);
+
+      emit({ phase: "create-instance", elapsedMs: Math.round(tInit - t0) });
+      const instance = await sdk.createInstance({
+        ...sdk.SepoliaConfig,
+        network: window.ethereum,
+      });
+      const tInstance = performance.now();
+      console.info(
+        `[fhevm] createInstance (Sepolia key + CRS fetch) done in ${Math.round(tInstance - tInit)}ms · total cold-start ${Math.round(tInstance - t0)}ms`,
+      );
+
+      emit({
+        phase: "ready",
+        totalMs: Math.round(tInstance - t0),
+        threads: threads ?? "single",
+      });
+      return instance;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      emit({
+        phase: "error",
+        elapsedMs: Math.round(performance.now() - t0),
+        message: msg,
+      });
+      instancePromise = null;
+      throw e;
+    }
   })();
 
   return instancePromise;
 }
+
+/**
+ * Per-call encrypt progress for the UI. The Zama SDK's `buffer.encrypt()`
+ * does ZK proof computation locally then POSTs to the relayer — the
+ * relayer round-trip is usually the dominant cost on Sepolia testnet.
+ */
+export type EncryptPhase =
+  | "awaiting-sdk"
+  | "building-proof"
+  | "submitting-to-relayer"
+  | "done";
 
 /**
  * Encrypts a single uint64 value as input for a contract call. Returns
@@ -123,11 +201,33 @@ export async function encryptUint64(
   contractAddress: `0x${string}`,
   userAddress: `0x${string}`,
   value: bigint,
+  onPhase?: (p: EncryptPhase) => void,
 ): Promise<{ handle: `0x${string}`; proof: `0x${string}` }> {
+  const t0 = performance.now();
+  onPhase?.("awaiting-sdk");
   const fhe = await getFhevmInstance();
+  const tSdk = performance.now();
+  console.info(
+    `[fhevm/encrypt] SDK ready in ${Math.round(tSdk - t0)}ms (cached if <50ms)`,
+  );
+
+  onPhase?.("building-proof");
   const buffer = fhe.createEncryptedInput(contractAddress, userAddress);
   buffer.add64(value);
+
+  // The SDK doesn't expose a separate "compute proof" vs "POST to relayer"
+  // boundary — buffer.encrypt() does both. We can't subdivide further
+  // without forking the SDK. The relayer round-trip dominates this on
+  // Sepolia; multi-threading only speeds up the local TFHE/ZK math.
+  onPhase?.("submitting-to-relayer");
+  const tProof = performance.now();
   const enc = await buffer.encrypt();
+  const tDone = performance.now();
+  console.info(
+    `[fhevm/encrypt] encrypt() done in ${Math.round(tDone - tProof)}ms · total ${Math.round(tDone - t0)}ms`,
+  );
+
+  onPhase?.("done");
   return {
     handle: `0x${Buffer.from(enc.handles[0]).toString("hex")}` as `0x${string}`,
     proof: `0x${Buffer.from(enc.inputProof).toString("hex")}` as `0x${string}`,
