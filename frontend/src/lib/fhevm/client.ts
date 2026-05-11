@@ -21,7 +21,7 @@ const SDK_SOURCES = [
 ];
 
 type RelayerSDK = {
-  initSDK: () => Promise<void>;
+  initSDK: (opts?: { thread?: number }) => Promise<void>;
   createInstance: (config: Record<string, unknown>) => Promise<FhevmInstance>;
   SepoliaConfig: Record<string, unknown>;
 };
@@ -95,7 +95,16 @@ export async function getFhevmInstance(): Promise<FhevmInstance> {
 
   instancePromise = (async () => {
     const sdk = await loadRelayerSDK();
-    await sdk.initSDK();
+    // Multi-threaded WASM if the page is cross-origin isolated
+    // (COOP/COEP set) AND SharedArrayBuffer is available. Otherwise
+    // initSDK silently falls back to single-threaded.
+    const threads =
+      typeof crossOriginIsolated !== "undefined" &&
+      crossOriginIsolated &&
+      typeof SharedArrayBuffer !== "undefined"
+        ? Math.min(navigator.hardwareConcurrency || 4, 8)
+        : undefined;
+    await sdk.initSDK(threads ? { thread: threads } : undefined);
     const instance = await sdk.createInstance({
       ...sdk.SepoliaConfig,
       network: window.ethereum,
