@@ -1,15 +1,24 @@
 /**
  * Zama relayer-SDK client for HashPay Confidential.
  *
- * Lazily injects the Zama UMD bundle from jsDelivr (rather than
- * importing `@zama-fhe/relayer-sdk/web`, which pulls 5MB+ of WASM
- * through Turbopack and stalls the production build). The UMD ships
- * its own WASM loader and exposes `window.relayerSDK` once loaded.
+ * Loads the UMD bundle as a script tag (rather than importing
+ * `@zama-fhe/relayer-sdk/web`, which pulls 5MB+ of WASM through
+ * Turbopack and stalls the production build). The UMD ships its own
+ * WASM loader and exposes `window.relayerSDK` once loaded.
+ *
+ * Self-hosted under /zama/. The UMD locates its WASM via
+ * `new URL("/tfhe_bg.wasm", scriptSrc)` — an absolute path against the
+ * script's host — so tfhe_bg.wasm and kms_lib_bg.wasm sit at the
+ * public root. unpkg is a defense-in-depth fallback if the self-hosted
+ * copy ever 404s; jsDelivr is excluded because it serves the .cjs as
+ * application/node + nosniff, which browsers refuse to execute.
  */
 import type { FhevmInstance } from "@zama-fhe/relayer-sdk/web";
 
-const SDK_VERSION = "0.4.1";
-const SDK_URL = `https://cdn.jsdelivr.net/npm/@zama-fhe/relayer-sdk@${SDK_VERSION}/bundle/relayer-sdk-js.umd.cjs`;
+const SDK_SOURCES = [
+  "/zama/relayer-sdk-js.umd.cjs",
+  "https://unpkg.com/@zama-fhe/relayer-sdk@0.4.1/bundle/relayer-sdk-js.umd.cjs",
+];
 
 type RelayerSDK = {
   initSDK: () => Promise<void>;
@@ -25,9 +34,8 @@ declare global {
 
 let scriptPromise: Promise<RelayerSDK> | null = null;
 
-function loadRelayerSDK(): Promise<RelayerSDK> {
-  if (scriptPromise) return scriptPromise;
-  scriptPromise = new Promise<RelayerSDK>((resolve, reject) => {
+function injectScript(url: string): Promise<RelayerSDK> {
+  return new Promise<RelayerSDK>((resolve, reject) => {
     if (window.relayerSDK) return resolve(window.relayerSDK);
 
     const finish = () => {
@@ -35,23 +43,45 @@ function loadRelayerSDK(): Promise<RelayerSDK> {
       else reject(new Error("Zama relayer SDK loaded but window.relayerSDK is undefined"));
     };
 
+    const s = document.createElement("script");
+    s.src = url;
+    s.async = true;
+    s.dataset.zamaRelayerSdk = url;
+    s.onload = finish;
+    s.onerror = () => reject(new Error(`Failed to load Zama relayer SDK from ${url}`));
+    document.head.appendChild(s);
+  });
+}
+
+function loadRelayerSDK(): Promise<RelayerSDK> {
+  if (scriptPromise) return scriptPromise;
+  scriptPromise = (async () => {
+    if (window.relayerSDK) return window.relayerSDK;
+
     const existing = document.querySelector<HTMLScriptElement>(
       `script[data-zama-relayer-sdk]`,
     );
     if (existing) {
-      existing.addEventListener("load", finish, { once: true });
-      existing.addEventListener("error", () => reject(new Error("Failed to load Zama relayer SDK")), { once: true });
-      return;
+      await new Promise<void>((res, rej) => {
+        existing.addEventListener("load", () => res(), { once: true });
+        existing.addEventListener("error", () => rej(new Error("Existing Zama SDK script failed")), { once: true });
+      });
+      if (window.relayerSDK) return window.relayerSDK;
     }
 
-    const s = document.createElement("script");
-    s.src = SDK_URL;
-    s.async = true;
-    s.dataset.zamaRelayerSdk = "true";
-    s.onload = finish;
-    s.onerror = () => reject(new Error(`Failed to load Zama relayer SDK from ${SDK_URL}`));
-    document.head.appendChild(s);
-  });
+    let lastError: unknown;
+    for (const url of SDK_SOURCES) {
+      try {
+        return await injectScript(url);
+      } catch (e) {
+        lastError = e;
+        console.warn(`[fhevm] SDK source failed (${url}):`, e);
+      }
+    }
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("All Zama relayer SDK sources failed");
+  })();
   return scriptPromise;
 }
 
