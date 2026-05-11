@@ -170,15 +170,29 @@ export default function ConfidentialPage() {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs text-white font-medium">
                     {fhevm.status === "loading-sdk" &&
-                      "Loading FHE relayer SDK…"}
+                      "Initializing FHE SDK (WASM + worker pool)…"}
                     {fhevm.status === "loading-keys" &&
-                      "Fetching Sepolia FHE keys (one-time, ~10–30s)…"}
+                      "Fetching Sepolia FHE keys (one-time, can take 30–90s)…"}
                     {fhevm.status === "error" && "FHE init failed"}
                   </div>
                   <div className="text-[11px] text-[#9BA3B7] mt-0.5">
-                    {fhevm.status === "error"
-                      ? fhevm.error ?? "Try reloading the page."
-                      : "Warming the SDK in the background so your first encrypted action is fast."}
+                    {fhevm.status === "error" ? (
+                      <>
+                        {fhevm.error ?? "Try reloading the page."}
+                        <button
+                          onClick={() => window.location.reload()}
+                          className="ml-2 text-[#C084FC] hover:underline"
+                        >
+                          Reload
+                        </button>
+                      </>
+                    ) : fhevm.threads === "single" ? (
+                      "Multi-threading hung — running single-threaded fallback. Encrypts will take longer."
+                    ) : fhevm.threads ? (
+                      `Multi-threaded (${fhevm.threads} workers). Warming in the background so your first encrypted action is fast.`
+                    ) : (
+                      "Warming the SDK in the background so your first encrypted action is fast."
+                    )}
                   </div>
                 </div>
               </div>

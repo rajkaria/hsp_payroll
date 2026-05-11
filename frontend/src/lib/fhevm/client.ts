@@ -115,6 +115,21 @@ function emit(p: FhevmInitPhase) {
   }
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    p.finally(() => {
+      if (timer) clearTimeout(timer);
+    }),
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`${label} timed out after ${ms}ms`)),
+        ms,
+      );
+    }),
+  ]);
+}
+
 export async function getFhevmInstance(): Promise<FhevmInstance> {
   if (typeof window === "undefined") {
     throw new Error("getFhevmInstance can only run in the browser");
@@ -142,20 +157,57 @@ export async function getFhevmInstance(): Promise<FhevmInstance> {
         `[fhevm] crossOriginIsolated=${isolated} SAB=${hasSAB} threads=${threads ?? "single"}`,
       );
 
+      let actualThreads: number | "single" = threads ?? "single";
       emit({
         phase: "init-sdk",
         elapsedMs: Math.round(tScript - t0),
-        threads: threads ?? "single",
+        threads: actualThreads,
       });
-      await sdk.initSDK(threads ? { thread: threads } : undefined);
+      console.info(`[fhevm] initSDK starting (threads=${actualThreads})…`);
+
+      // Auto-fallback: threading frequently hangs under browser-extension
+      // interference (the worker pool waits forever for a worker that never
+      // signals ready). 30s is plenty for healthy WASM compile; if we hit it
+      // with threading, retry single-threaded.
+      try {
+        await withTimeout(
+          sdk.initSDK(threads ? { thread: threads } : undefined),
+          threads ? 30_000 : 60_000,
+          `initSDK${threads ? " (threaded)" : ""}`,
+        );
+      } catch (e) {
+        if (threads) {
+          console.warn(
+            `[fhevm] initSDK hung with threading: ${e instanceof Error ? e.message : e}. Retrying single-threaded…`,
+          );
+          actualThreads = "single";
+          emit({
+            phase: "init-sdk",
+            elapsedMs: Math.round(performance.now() - t0),
+            threads: "single",
+          });
+          await withTimeout(sdk.initSDK(), 60_000, "initSDK (fallback)");
+        } else {
+          throw e;
+        }
+      }
       const tInit = performance.now();
-      console.info(`[fhevm] initSDK done in ${Math.round(tInit - tScript)}ms`);
+      console.info(
+        `[fhevm] initSDK done in ${Math.round(tInit - tScript)}ms (threads=${actualThreads})`,
+      );
 
       emit({ phase: "create-instance", elapsedMs: Math.round(tInit - t0) });
-      const instance = await sdk.createInstance({
-        ...sdk.SepoliaConfig,
-        network: window.ethereum,
-      });
+      console.info(
+        "[fhevm] createInstance starting (fetches Sepolia public key + CRS)…",
+      );
+      const instance = await withTimeout(
+        sdk.createInstance({
+          ...sdk.SepoliaConfig,
+          network: window.ethereum,
+        }),
+        120_000,
+        "createInstance",
+      );
       const tInstance = performance.now();
       console.info(
         `[fhevm] createInstance (Sepolia key + CRS fetch) done in ${Math.round(tInstance - tInit)}ms · total cold-start ${Math.round(tInstance - t0)}ms`,
@@ -164,7 +216,7 @@ export async function getFhevmInstance(): Promise<FhevmInstance> {
       emit({
         phase: "ready",
         totalMs: Math.round(tInstance - t0),
-        threads: threads ?? "single",
+        threads: actualThreads,
       });
       return instance;
     } catch (e) {

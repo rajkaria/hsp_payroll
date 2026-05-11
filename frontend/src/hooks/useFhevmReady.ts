@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { FHEVM_CHAIN_ID } from "@/lib/fhevm/contracts";
-import { getFhevmInstance } from "@/lib/fhevm/client";
+import { getFhevmInstance, onFhevmInit } from "@/lib/fhevm/client";
 
 export type FhevmStatus =
   | "idle"
@@ -14,43 +14,47 @@ export type FhevmStatus =
 
 /**
  * Eagerly warms the FHEVM instance once a wallet is connected on the
- * Sepolia FHEVM chain. Loads the relayer SDK + WASM + Sepolia public
- * key in the background so the first encrypted action doesn't pay the
- * full ~30-60s cold-start cost behind an opaque "Encrypting…" label.
+ * Sepolia FHEVM chain. Subscribes to onFhevmInit so the status reflects
+ * the real phase boundaries reported by client.ts — not a timer guess.
  */
 export function useFhevmReady() {
   const { isConnected } = useAccount();
   const chainId = useChainId();
   const [status, setStatus] = useState<FhevmStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [threads, setThreads] = useState<number | "single" | null>(null);
   const startedRef = useRef(false);
 
   useEffect(() => {
-    if (!isConnected || chainId !== FHEVM_CHAIN_ID) {
-      return;
-    }
+    const unsubscribe = onFhevmInit((p) => {
+      if (p.phase === "loading-script" || p.phase === "init-sdk") {
+        setStatus("loading-sdk");
+        if (p.phase === "init-sdk") setThreads(p.threads);
+      } else if (p.phase === "create-instance") {
+        setStatus("loading-keys");
+      } else if (p.phase === "ready") {
+        setStatus("ready");
+        setThreads(p.threads);
+      } else if (p.phase === "error") {
+        setStatus("error");
+        setError(p.message);
+        startedRef.current = false;
+      }
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isConnected || chainId !== FHEVM_CHAIN_ID) return;
     if (startedRef.current) return;
     startedRef.current = true;
 
-    setStatus("loading-sdk");
-    const keysTimer = setTimeout(() => {
-      setStatus((s) => (s === "loading-sdk" ? "loading-keys" : s));
-    }, 2500);
-
-    getFhevmInstance()
-      .then(() => {
-        clearTimeout(keysTimer);
-        setStatus("ready");
-      })
-      .catch((e) => {
-        clearTimeout(keysTimer);
-        setStatus("error");
-        setError(e instanceof Error ? e.message : String(e));
-        startedRef.current = false;
-      });
-
-    return () => clearTimeout(keysTimer);
+    getFhevmInstance().catch(() => {
+      // error already surfaced through onFhevmInit; nothing to do here
+    });
   }, [isConnected, chainId]);
 
-  return { status, error };
+  return { status, error, threads };
 }
